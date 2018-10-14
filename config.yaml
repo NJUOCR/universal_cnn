@@ -1,0 +1,5 @@
+# Which gpu for running. Running on cpu if `-1`
+gpu: -1
+
+# `train` or `infer`
+mode: 'train'
