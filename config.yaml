@@ -1,5 +1,34 @@
+# restore training from latest checkpoint
+restore: false
+
+# checkpoint directory
+ckpt: ./checkpoint
+
+dir_train: H:\\ocr_generated_data\\1000-1015\\train
+dir_val: H:\\ocr_generated_data\\1000-1015\\train
+dir_infer: ./data/infer
+
 # Which gpu for running. Running on cpu if `-1`
-gpu: -1
+gpu: 0
 
 # `train` or `infer`
 mode: 'train'
+
+# input image size
+input_width: 256
+input_height: 32
+
+# batch size, number of samples in one batch
+batch_size: 64
+
+# number of classes
+num_class: 11
+
+# number of epochs
+num_epochs: 100
+
+# save model to checkpoint every these steps
+save_interval: 10
+
+# do validation every these steps
+val_interval: 8

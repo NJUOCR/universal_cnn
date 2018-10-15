@@ -10,7 +10,7 @@ class Model:
         self.training = mode.lower() in ('train',)
 
         self.images = tf.placeholder(tf.float32, [None, input_height, input_width, 1], name='input_img_batch')
-        self.labels = tf.placeholder(tf.int8, [None], name='input_lbl_batch')
+        self.labels = tf.placeholder(tf.int32, [None], name='input_lbl_batch')
 
         # define op
         self.step = None
