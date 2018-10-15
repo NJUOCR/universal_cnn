@@ -56,7 +56,7 @@ class Main:
                     self.save(step)
 
                 if step % args['val_interval'] == 0:
-                    print("#%d\t\t" % step, end='')
+                    print("#%d[%d]\t\t" % (step, itr), end='')
 
                     val_data.init_indices()
                     val_batch = val_data.next_batch(batch_size)
@@ -72,7 +72,7 @@ class Main:
                         val_cost += loss
                         val_samples += batch_size
                         val_batch = val_data.next_batch(batch_size)
-                    print("accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, val_cost / val_samples))
+                    print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, val_cost / val_samples))
                     cost_between_val = samples_between_val = 0
         self.save(step)
 
