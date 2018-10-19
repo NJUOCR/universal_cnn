@@ -9,7 +9,7 @@ from model import Model
 
 class Main:
     def __init__(self):
-        config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)
+        config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         self.sess = tf.Session(config=config)
         self.saver = None
@@ -24,13 +24,14 @@ class Main:
             print('%s ??' % mode)
 
     def train(self):
-        train_data = RotationData(args['input_height'], args['input_width'], args['num_class']).read(args['dir_train'])
-        val_data = RotationData(args['input_height'], args['input_width'], args['num_class']).read(args['dir_val'])
+        print('start training')
 
         model = Model(args['input_width'], args['input_height'], args['num_class'], 'train')
         model.build()
-
         self.sess.run(tf.global_variables_initializer())
+
+        val_data = RotationData(args['input_height'], args['input_width'], args['num_class']).read(args['dir_val'])
+        train_data = RotationData(args['input_height'], args['input_width'], args['num_class']).read(args['dir_train'])
 
         if args['restore']:
             self.restore()
@@ -110,17 +111,20 @@ class Main:
 
 
 def main(_):
+    print('using tensorflow', tf.__version__)
     m = Main()
     if args['gpu'] == -1:
         dev = '/cpu:0'
     else:
         dev = '/gpu:%d' % args['gpu']
 
-    with tf.device(dev):
-        print(dev)
-        m.run('train')
+    # with tf.device(dev):
+    #     print('---')
+    #     print(dev)
+    #     m.run('train')
+    m.run('train')
 
 
 if __name__ == '__main__':
-    tf.logging.set_verbosity('DEBUG')
+    tf.logging.set_verbosity('INFO')
     tf.app.run()

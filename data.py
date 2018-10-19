@@ -1,7 +1,7 @@
 import os
-
 import cv2 as cv
 import numpy as np
+from progressbar import ProgressBar
 
 
 class AbstractData:
@@ -16,17 +16,22 @@ class AbstractData:
         self.batch_ptr = 0
 
     def read(self, src_root):
+        print('loading data...')
         images = []
         labels = []
-        for parent_dir, _, filenames in os.walk(src_root):
-            for filename in filenames:
-                labels.append(self.filename2label(filename))
-                images.append(
-                    np.reshape(
-                        cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
-                        (self.height, self.width, 1)
+        with ProgressBar() as bar:
+            i = 0
+            for parent_dir, _, filenames in os.walk(src_root):
+                for filename in filenames:
+                    labels.append(self.filename2label(filename))
+                    images.append(
+                        np.reshape(
+                            cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
+                            (self.height, self.width, 1)
+                        )
                     )
-                )
+                    i += 1
+                    bar.update(i)
         self.images = np.array(images)
         self.labels = np.array(labels)
         return self

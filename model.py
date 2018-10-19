@@ -31,22 +31,34 @@ class Model:
 
         input_layer = tf.reshape(images, [-1, self.input_height, self.input_width, 1])
 
+        # cnn block 1
         x = tf.layers.conv2d(
             inputs=input_layer,
-            filters=64,
+            filters=32,
             kernel_size=3,
             padding='same',
             kernel_initializer=tf.glorot_uniform_initializer()
         )
 
+        x = tf.layers.batch_normalization(
+            inputs=x,
+            training=self.training
+        )
+
         x = tf.nn.leaky_relu(x, alpha=0.01)
 
+        # cnn block 2
         x = tf.layers.conv2d(
             inputs=x,
             filters=64,
             kernel_size=3,
             padding='same',
             kernel_initializer=tf.glorot_uniform_initializer()
+        )
+
+        x = tf.layers.batch_normalization(
+            inputs=x,
+            training=self.training
         )
 
         x = tf.nn.leaky_relu(x, alpha=0.01)
@@ -57,24 +69,31 @@ class Model:
             strides=2
         )
 
-        x = tf.layers.dropout(
-            rate=0.25,
+        # cnn block 3
+        x = tf.layers.conv2d(
+            inputs=x,
+            filters=64,
+            kernel_size=3,
+            padding='same',
+            kernel_initializer=tf.glorot_uniform_initializer()
+        )
+
+        x = tf.layers.batch_normalization(
             inputs=x,
             training=self.training
         )
 
+        x = tf.nn.leaky_relu(x, alpha=0.01)
+
+        x = tf.layers.max_pooling2d(
+            inputs=x,
+            pool_size=[2, 2],
+            strides=2
+        )
+
+        # dense
         x = tf.layers.flatten(
             inputs=x
-        )
-
-        x = tf.layers.dense(
-            inputs=x,
-            units=1024
-        )
-
-        x = tf.layers.dropout(
-            inputs=x,
-            training=self.training
         )
 
         x = tf.layers.dense(
@@ -82,10 +101,14 @@ class Model:
             units=256
         )
 
-        x = tf.layers.dropout(
-            rate=0.25,
+        # x = tf.layers.dropout(
+        #     inputs=x,
+        #     training=self.training
+        # )
+
+        x = tf.layers.dense(
             inputs=x,
-            training=self.training
+            units=64
         )
 
         logits = tf.layers.dense(
