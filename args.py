@@ -10,6 +10,6 @@
 import json
 
 import yaml
-f = open('config.yaml', encoding='utf-8')
+f = open('config-test.yaml', encoding='utf-8')
 args = yaml.load(f.read())
 f.close()
