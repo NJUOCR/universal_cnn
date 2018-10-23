@@ -20,24 +20,36 @@ def calculate_pixel(image, axis):
     return pixel_sum
 
 
-def project(img, direction='vertical'):
+def project(img, direction='vertical', smooth=None):
     """
     Do projection.
+    :param smooth: None or a tuple containing (`window_size`, `smooth_times`)
     :param img: A numpy array. source image.
     :param direction: `vertical` | `horizontal`
     :return: A numpy array with shape (1, )
     """
     assert direction in ('vertical', 'horizontal')
-    return calculate_pixel(img, 1 if direction == 'horizontal' else 0)
+    assert smooth is None or len(smooth) == 2
+    sum_array = calculate_pixel(img, 1 if direction == 'horizontal' else 0)
+    if smooth is not None:
+        window_size, times = smooth
+        kernel = np.ones((window_size,))/window_size
+        for _ in range(times):
+            sum_array = np.convolve(sum_array, kernel, mode='same')
+        sum_array = sum_array // 1
+    return sum_array
 
 
-def draw_projective_histogram(img, direction='both', histogram_height=100, histogram_background='white'):
+def draw_projective_histogram(img, direction='both', histogram_height=100, histogram_background='white',
+                              smooth=None):
     """
     1. Copy the input img array
     2. Do padding, on right, bottom or both, according to the `direction`
     3. Draw histogram
 
     > The original input image will not be changed.
+    :param smooth: a tuple, `(window_size, smooth_times)`. If it is not `None`, several one-dimensional box blur
+    will be performed on the `sum_array`, box shape is `(window_size, )`
     :param histogram_background:
     :param histogram_height:
     :param img: A numpy array, the source image.
@@ -62,14 +74,14 @@ def draw_projective_histogram(img, direction='both', histogram_height=100, histo
     container = container.reshape((*container.shape, 1))
 
     if direction == 'both':
-        vertical_sum = project(img, direction='vertical')
+        vertical_sum = project(img, direction='vertical', smooth=smooth)
         sum2histogram(vertical_sum, container[img_height:, :img_width])
-        horizontal_sum = project(img, direction='horizontal')
+        horizontal_sum = project(img, direction='horizontal', smooth=smooth)
         sum2histogram(horizontal_sum, np.transpose(container[:img_height, img_width:], [1, 0, 2]))
     elif direction == 'vertical':
-        vertical_sum = project(img, direction='vertical')
+        vertical_sum = project(img, direction='vertical', smooth=smooth)
         sum2histogram(vertical_sum, container[img_height:, :img_width])
     elif direction == 'horizontal':
-        horizontal_sum = project(img, direction='horizontal')
+        horizontal_sum = project(img, direction='horizontal', smooth=smooth)
         sum2histogram(horizontal_sum, np.transpose(container[:img_height, img_width:], [1, 0, 2]))
     return container
