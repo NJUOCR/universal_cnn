@@ -3,8 +3,9 @@ import os
 import tensorflow as tf
 
 from args import args
-from data import RotationData
-from models.rotation_model import Model
+from data import SingleCharData as Data
+# from data import RotationData as Data
+from models.single_char_model import Model
 
 
 class Main:
@@ -30,8 +31,8 @@ class Main:
         model.build()
         self.sess.run(tf.global_variables_initializer())
 
-        val_data = RotationData(args['input_height'], args['input_width'], args['num_class']).read(args['dir_val'])
-        train_data = RotationData(args['input_height'], args['input_width'], args['num_class']).read(args['dir_train'])
+        val_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_val'])
+        train_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_train'])
 
         if args['restore']:
             self.restore()
@@ -83,7 +84,7 @@ class Main:
         self.restore()
         print("start inferring")
         batch_size = args['batch_size']
-        infer_data = RotationData(args['input_height'], args['input_width'], args['num_class'])
+        infer_data = Data(args['input_height'], args['input_width'], args['num_class'])
         infer_data.read(args['dir_infer'])
         infer_data.init_indices()
         infer_batch = infer_data.next_batch(batch_size)

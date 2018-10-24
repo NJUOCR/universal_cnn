@@ -13,7 +13,7 @@ def calculate_pixel(image, axis):
     """
     # 取反
     img_matrix = np.logical_not(image)
-    img_matrix = img_matrix + 0
+    img_matrix = img_matrix + 0.0
     # img_matrix = image // 255
     pixel_sum = np.sum(img_matrix, axis=axis)
 
@@ -36,7 +36,7 @@ def project(img, direction='vertical', smooth=None):
         kernel = np.ones((window_size,))/window_size
         for _ in range(times):
             sum_array = np.convolve(sum_array, kernel, mode='same')
-        sum_array = sum_array // 1
+        # sum_array = sum_array // 1
     return sum_array
 
 
@@ -61,6 +61,7 @@ def draw_projective_histogram(img, direction='both', histogram_height=100, histo
 
     def sum2histogram(sum_array, histogram_canvas):
         assert len(sum_array.shape) == 1, "a `sum_array` should have only one dimension"
+        sum_array = sum_array // 1
         max_val = np.max(sum_array)
         for x, val in enumerate(sum_array):
             histogram_canvas[histogram_height - int(val / max_val * histogram_height):, x] = foreground_color
@@ -85,3 +86,14 @@ def draw_projective_histogram(img, direction='both', histogram_height=100, histo
         horizontal_sum = project(img, direction='horizontal', smooth=smooth)
         sum2histogram(horizontal_sum, np.transpose(container[:img_height, img_width:], [1, 0, 2]))
     return container
+
+
+def get_splitter(sum_array):
+    splitters = []
+    for i in range(1, len(sum_array)-1):
+        left, cur, right = sum_array[i-1:i+2]
+        if cur == left == right:
+            continue
+        if cur <= min(left, right):
+            splitters.append(i)
+    return splitters

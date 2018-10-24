@@ -48,6 +48,8 @@ class Model:
 
         x = tf.nn.leaky_relu(x, alpha=0.01)
 
+        x = tf.layers.max_pooling2d(x, pool_size=[2, 2], strides=2)
+
         # cnn block 2
         x = tf.layers.conv2d(
             inputs=x,
@@ -99,17 +101,7 @@ class Model:
 
         x = tf.layers.dense(
             inputs=x,
-            units=256
-        )
-
-        # x = tf.layers.dropout(
-        #     inputs=x,
-        #     training=self.training
-        # )
-
-        x = tf.layers.dense(
-            inputs=x,
-            units=64
+            units=8192
         )
 
         logits = tf.layers.dense(
@@ -123,10 +115,13 @@ class Model:
 
         self.loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
         optimizer = tf.train.AdamOptimizer()
-        self.train_op = optimizer.minimize(
-            loss=self.loss,
-            global_step=self.step
-        )
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+
+        with tf.control_dependencies(update_ops):
+            self.train_op = optimizer.minimize(
+                loss=self.loss,
+                global_step=self.step
+            )
 
         self.val_acc, self.val_acc_update_op = tf.metrics.accuracy(labels, self.classes)
 

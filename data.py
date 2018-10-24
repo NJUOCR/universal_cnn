@@ -82,3 +82,8 @@ class RotationData(AbstractData):
         basename = '.'.join(_)
         angle = round(float(basename.split('_')[1]))
         return angle + self.num_class // 2
+
+
+class SingleCharData(AbstractData):
+    def filename2label(self, filename: str):
+        return filename[:-4].split("_")[1]
