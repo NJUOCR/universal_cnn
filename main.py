@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from args import args
 from data import RotationData
-from model import Model
+from models.rotation_model import Model
 
 
 class Main:
