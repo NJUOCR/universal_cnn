@@ -75,7 +75,29 @@ class Model:
         # cnn block 3
         x = tf.layers.conv2d(
             inputs=x,
-            filters=64,
+            filters=128,
+            kernel_size=3,
+            padding='same',
+            kernel_initializer=tf.glorot_uniform_initializer()
+        )
+
+        x = tf.layers.batch_normalization(
+            inputs=x,
+            training=self.training
+        )
+
+        x = tf.nn.leaky_relu(x, alpha=0.01)
+
+        x = tf.layers.max_pooling2d(
+            inputs=x,
+            pool_size=[2, 2],
+            strides=2
+        )
+
+        # cnn block 4
+        x = tf.layers.conv2d(
+            inputs=x,
+            filters=256,
             kernel_size=3,
             padding='same',
             kernel_initializer=tf.glorot_uniform_initializer()
