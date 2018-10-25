@@ -13,6 +13,9 @@ class AbstractData:
         self.predictions = None
         self.num_class = num_class
 
+        self.label_map = {}
+        self.label_map_reverse = {}
+
         self.batch_ptr = 0
 
     def read(self, src_root):
@@ -23,7 +26,12 @@ class AbstractData:
             i = 0
             for parent_dir, _, filenames in os.walk(src_root):
                 for filename in filenames:
-                    labels.append(self.filename2label(filename))
+                    lbl = self.filename2label(filename)
+                    if lbl not in self.label_map:
+                        next_idx = len(self.label_map)
+                        self.label_map[lbl] = next_idx
+                        self.label_map_reverse[next_idx] = lbl
+                    labels.append(self.label_map[lbl])
                     images.append(
                         np.reshape(
                             cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
