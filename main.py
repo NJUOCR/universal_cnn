@@ -74,6 +74,11 @@ class Main:
                         val_cost += loss
                         val_samples += batch_size
                         val_batch = val_data.next_batch(batch_size)
+                    loss = val_cost/val_samples
+                    tf.summary.scalar('average_batch_loss', loss)
+                    tf.summary.scalar('accuracy', acc)
+                    print("val_cost is %f"%val_cost)
+                    print("val_sample is %d"%val_samples)
                     print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, val_cost / val_samples))
                     cost_between_val = samples_between_val = 0
         self.save(step)
@@ -109,6 +114,20 @@ class Main:
             self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=10)
         self.saver.save(self.sess, os.path.join(args['ckpt'], 'rotation_model'), global_step=step)
         print('ckpt saved')
+
+    def variable_summaries(self, var):
+        with tf.name_scope('summaries'):
+            mean = tf.reduce_mean(var)
+            tf.summary.scalar('mean', mean)
+
+            # 计算参数的标准差
+            with tf.name_scope('stddev'):
+                stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+            tf.summary.scalar('stddev', stddev)
+            tf.summary.scalar('max', tf.reduce_max(var))
+            tf.summary.scalar('min', tf.reduce_min(var))
+
+            tf.summary.scalar('histogram', var)
 
 
 def main(_):
