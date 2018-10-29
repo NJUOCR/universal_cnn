@@ -75,7 +75,6 @@ class Main:
                         loss, _acc, acc = self.sess.run(
                             [model.loss, model.val_acc_update_op, model.val_acc],
                             feed_dict=val_feed_dict)
-                        writer.add_summary(summ, global_step=step)
                         val_cost += loss
                         val_samples += batch_size
                         val_batch = val_data.next_batch(batch_size)
