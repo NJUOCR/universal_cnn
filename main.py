@@ -17,7 +17,7 @@ class Main:
 
     def run(self, mode):
         self.sess.run(tf.global_variables_initializer())
-        if mode in ('train', ):
+        if mode in ('train',):
             self.train()
         elif mode in ('infer', 'pred'):
             self.infer()
@@ -25,7 +25,6 @@ class Main:
             print('%s ??' % mode)
 
     def train(self):
-        print('start training')
 
         model = Model(args['input_width'], args['input_height'], args['num_class'], 'train')
         model.build()
@@ -33,9 +32,14 @@ class Main:
 
         val_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_val'])
         train_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_train'])
+        print('start training')
 
         if args['restore']:
             self.restore()
+
+        # init tensorboard
+        writer = tf.summary.FileWriter("tb")
+        summaries = tf.summary.merge_all()
 
         # start training
         step = 0
@@ -69,16 +73,18 @@ class Main:
                     while val_batch is not None:
                         val_image, val_labels = val_batch
                         val_feed_dict = model.feed(val_image, val_labels)
-                        loss, _acc, acc = self.sess.run([model.loss, model.val_acc_update_op, model.val_acc],
-                                                        feed_dict=val_feed_dict)
+                        summ, loss, _acc, acc = self.sess.run(
+                            [summaries, model.loss, model.val_acc_update_op, model.val_acc],
+                            feed_dict=val_feed_dict)
+                        writer.add_summary(summ, global_step=step)
                         val_cost += loss
                         val_samples += batch_size
                         val_batch = val_data.next_batch(batch_size)
-                    loss = val_cost/val_samples
+                    loss = val_cost / val_samples
                     tf.summary.scalar('average_batch_loss', loss)
                     tf.summary.scalar('accuracy', acc)
-                    print("val_cost is %f"%val_cost)
-                    print("val_sample is %d"%val_samples)
+                    print("val_cost is %f" % val_cost)
+                    print("val_sample is %d" % val_samples)
                     print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, val_cost / val_samples))
                     cost_between_val = samples_between_val = 0
         self.save(step)
@@ -101,7 +107,7 @@ class Main:
                                     feed_dict=infer_feed_dict)
 
     def restore(self):
-        self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=10)
+        self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
         ckpt = tf.train.latest_checkpoint(args['ckpt'])
         if ckpt:
             self.saver.restore(self.sess, ckpt)
@@ -112,7 +118,7 @@ class Main:
     def save(self, step):
         if self.saver is None:
             self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=10)
-        self.saver.save(self.sess, os.path.join(args['ckpt'], 'rotation_model'), global_step=step)
+        self.saver.save(self.sess, os.path.join(args['ckpt'], '%s_model' % str(args['name'])), global_step=step)
         print('ckpt saved')
 
     def variable_summaries(self, var):
