@@ -39,7 +39,6 @@ class Main:
 
         # init tensorboard
         writer = tf.summary.FileWriter("tb")
-        summaries = tf.summary.merge_all()
 
         # start training
         step = 0
@@ -73,8 +72,8 @@ class Main:
                     while val_batch is not None:
                         val_image, val_labels = val_batch
                         val_feed_dict = model.feed(val_image, val_labels)
-                        summ, loss, _acc, acc = self.sess.run(
-                            [summaries, model.loss, model.val_acc_update_op, model.val_acc],
+                        loss, _acc, acc = self.sess.run(
+                            [model.loss, model.val_acc_update_op, model.val_acc],
                             feed_dict=val_feed_dict)
                         writer.add_summary(summ, global_step=step)
                         val_cost += loss
@@ -83,6 +82,9 @@ class Main:
                     loss = val_cost / val_samples
                     tf.summary.scalar('average_batch_loss', loss)
                     tf.summary.scalar('accuracy', acc)
+                    merged = tf.summary.merge_all()
+                    summaries = self.sess.run(merged)
+                    writer.add_summary(summaries, step)
                     print("val_cost is %f" % val_cost)
                     print("val_sample is %d" % val_samples)
                     print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, val_cost / val_samples))
