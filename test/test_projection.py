@@ -18,6 +18,8 @@ def batch_generate_projection(src_root="/usr/local/src/data/doc_imgs",
                 img = uimg.read(os.path.join(src_root, directory, file), cv.IMREAD_COLOR)
                 assert img is not None, "Read fails"
                 img = uimg.auto_bin(img)
+                img = uimg.erode_img(img, 10, 10)
+
                 sum_array = proj.project(img, direction='horizontal', smooth=(15, 9))
                 spts = proj.get_splitter(sum_array)
                 img = proj.draw_projective_histogram(img, direction='horizontal')
@@ -39,6 +41,7 @@ def generate_projection(src_root="/usr/local/src/data/doc_imgs",
                 input_img = uimg.read(os.path.join(src_root, directory, file), cv.IMREAD_COLOR)
                 assert input_img is not None, "Read fails"
                 img = uimg.auto_bin(input_img)
+
                 horizontal_sum_array = proj.project(img, direction='horizontal', smooth=(15, 9))
                 line_histo_img = proj.draw_projective_histogram(img, direction='horizontal', smooth=(15, 9))
 
@@ -46,7 +49,7 @@ def generate_projection(src_root="/usr/local/src/data/doc_imgs",
                 img[line_splitters, :] = 0
                 for upper, lower in zip(line_splitters, line_splitters[1:]):
                     line_img = img[upper:lower, :]
-                    vertical_sum_array = proj.project(line_img, direction='vertical', smooth=(15, 9))
+                    vertical_sum_array = proj.project(line_img, direction='vertical', smooth=(max(5, (lower-upper)//6), 6))
                     char_splitter = proj.get_splitter(vertical_sum_array)
                     line_img[:,char_splitter] = 0
                 uimg.save(os.path.join(dst_dir, file), img)
@@ -74,6 +77,11 @@ def generate_projection(src_root="/usr/local/src/data/doc_imgs",
 
 if __name__ == '__main__':
     # batch_generate_projection()
-    generate_projection()
+    src_root = "/usr/local/src/data/doc_imgs"
+    block_split = '/usr/local/src/data/block_split_winchange'
+    generate_projection( src_root,block_split)
 
     # uimg.save('char.jpg', generate_projection('../img-0005.jpg'))
+    # img = uimg.read('../img-0005.jpg')
+    # img = uimg.erode_img(img, 10, 10)
+    # uimg.save('test2.jpg', img)

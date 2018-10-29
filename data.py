@@ -40,7 +40,7 @@ class AbstractData:
                     )
                     i += 1
                     bar.update(i)
-        self.images = np.array(images)
+        self.images = np.array([e/255.0 for e in images], dtype=float)
         self.labels = np.array(labels)
         return self
 
