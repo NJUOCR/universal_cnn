@@ -79,14 +79,13 @@ class Main:
                         val_samples += batch_size
                         val_batch = val_data.next_batch(batch_size)
                     loss = val_cost / val_samples
-                    tf.summary.scalar('average_batch_loss', loss)
-                    tf.summary.scalar('accuracy', acc)
-                    merged = tf.summary.merge_all()
-                    summaries = self.sess.run(merged)
-                    writer.add_summary(summaries, step)
+                    custom_sm = tf.Summary(value=[
+                        tf.Summary.Value(tag="accuracy", simple_value=acc)
+                    ])
+                    writer.add_summary(custom_sm, step)
                     print("val_cost is %f" % val_cost)
                     print("val_sample is %d" % val_samples)
-                    print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, val_cost / val_samples))
+                    print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, loss))
                     cost_between_val = samples_between_val = 0
         self.save(step)
 
