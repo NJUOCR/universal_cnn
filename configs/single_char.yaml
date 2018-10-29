@@ -1,0 +1,34 @@
+# restore training from latest checkpoint
+restore: false
+
+# checkpoint directory
+ckpt: ./checkpoint
+
+dir_train: /usr/local/src/data/sc/train
+dir_val: /usr/local/src/data/sc/val
+dir_infer: ./data/infer
+
+# Which gpu for running. Running on cpu if `-1`
+gpu: 0
+
+# `train` or `infer`
+mode: 'train'
+
+# input image size
+input_width: 64
+input_height: 64
+
+# batch size, number of samples in one batch
+batch_size: 128
+
+# number of classes
+num_class: 3899
+
+# number of epochs
+num_epochs: 100
+
+# save model to checkpoint every these steps
+save_interval: 256
+
+# do validation every these steps
+val_interval: 256
