@@ -6,7 +6,7 @@ restore: false
 # checkpoint directory
 ckpt: ./checkpoint
 
-dir_train: /usr/local/src/data/sc/train
+dir_train: /usr/local/src/data/sc/val
 dir_val: /usr/local/src/data/sc/val
 dir_infer: ./data/infer
 
