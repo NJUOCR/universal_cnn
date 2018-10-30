@@ -1,6 +1,6 @@
 import os
 import re
-
+import json
 import cv2 as cv
 import numpy as np
 from progressbar import ProgressBar
@@ -20,37 +20,42 @@ class AbstractData:
 
         self.batch_ptr = 0
 
-    def read(self, src_root, size=None):
+    def load_char_map(self, file_path):
+        with open(file_path, encoding='utf-8') as f:
+            self.label_map = json.load(f)
+        for k, v in self.label_map.items():
+            self.label_map_reverse[v] = k
+        return self
+
+    def dump_char_map(self, file_path):
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(self.label_map, f)
+        return self
+
+    def clear_char_map(self):
+        self.label_map_reverse = {}
+        self.label_map = {}
+        return self
+
+    def read(self, src_root, size=None, make_char_map=False):
         print('loading data...%s' % '' if size is None else ("[%d]" % size))
         images = []
         labels = []
         with ProgressBar(max_value=size) as bar:
-            i = 0
             for parent_dir, _, filenames in os.walk(src_root):
                 for filename in filenames:
                     lbl = self.filename2label(filename)
-                    if lbl not in self.label_map:
+                    if make_char_map and lbl not in self.label_map:
                         next_idx = len(self.label_map)
                         self.label_map[lbl] = next_idx
                         self.label_map_reverse[next_idx] = lbl
                     labels.append(self.label_map[lbl])
-                    # images.append(
-                    #     np.array(
-                    #         np.reshape(
-                    #             cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
-                    #             (self.height, self.width, 1)
-                    #         ) / 255.0,
-                    #         dtype=float
-                    #     )
-                    # )
                     images.append(
                         cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0)
                         .astype(np.float32)
                         .reshape((self.height, self.width, 1)) / 255.
                     )
-
-                    i += 1
-                    bar.update(i)
+                    bar.update(bar.value+1)
         self.images = np.array(images)
         self.labels = np.array(labels)
         return self
