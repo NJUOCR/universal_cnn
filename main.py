@@ -31,9 +31,9 @@ class Main:
         self.sess.run(tf.global_variables_initializer())
 
         val_data = Data(args['input_height'], args['input_width'], args['num_class'])\
-            .read(args['dir_val'])
+            .read(args['dir_val'], size=args['val_size'])
         train_data = Data(args['input_height'], args['input_width'], args['num_class'])\
-            .read(args['dir_train'])\
+            .read(args['dir_train'], size=args['train_size'])\
             .shuffle_indices()
         print('start training')
 
