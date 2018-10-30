@@ -1,7 +1,7 @@
 import os
-import cv2 as cv
-import numpy as np
 import re
+
+import numpy as np
 from progressbar import ProgressBar
 
 
@@ -33,15 +33,22 @@ class AbstractData:
                         self.label_map[lbl] = next_idx
                         self.label_map_reverse[next_idx] = lbl
                     labels.append(self.label_map[lbl])
+                    # images.append(
+                    #     np.array(
+                    #         np.reshape(
+                    #             cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
+                    #             (self.height, self.width, 1)
+                    #         ) / 255.0,
+                    #         dtype=float
+                    #     )
+                    # )
                     images.append(
-                        np.array(
-                            np.reshape(
-                                cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
-                                (self.height, self.width, 1)
-                            ) / 255.0,
-                            dtype=float
+                        np.reshape(
+                            np.fromfile(os.path.join(parent_dir, filename), dtype=float)[:, :, 0]/255.0,
+                            (self.height, self.width, 1)
                         )
                     )
+
                     i += 1
                     bar.update(i)
         self.images = np.array(images)
