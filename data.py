@@ -44,9 +44,9 @@ class AbstractData:
                     # )
                     images.append(
                         np.reshape(
-                            np.fromfile(os.path.join(parent_dir, filename), dtype=float)[:, :, 0]/255.0,
+                            np.fromfile(os.path.join(parent_dir, filename), dtype=float),
                             (self.height, self.width, 1)
-                        )
+                        )[:, :, 0]/255.0
                     )
 
                     i += 1
