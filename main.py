@@ -30,8 +30,11 @@ class Main:
         model.build()
         self.sess.run(tf.global_variables_initializer())
 
-        val_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_val'])
-        train_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_train'])
+        val_data = Data(args['input_height'], args['input_width'], args['num_class'])\
+            .read(args['dir_val'])
+        train_data = Data(args['input_height'], args['input_width'], args['num_class'])\
+            .read(args['dir_train'])\
+            .shuffle_indices()
         print('start training')
 
         if args['restore']:

@@ -55,11 +55,13 @@ class AbstractData:
         samples = self.size()
         self.indices = np.random.permutation(samples)
         self.batch_ptr = 0
+        return self
 
     def init_indices(self):
         samples = self.size()
         self.indices = np.arange(0, samples, dtype=np.int32)
         self.batch_ptr = 0
+        return self
 
     def next_batch(self, batch_size):
         start, end = self.batch_ptr, self.batch_ptr + batch_size
