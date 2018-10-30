@@ -10,6 +10,10 @@ dir_train: /usr/local/src/data/sc/val
 dir_val: /usr/local/src/data/sc/val
 dir_infer: ./data/infer
 
+# [optional] size of dataset
+train_size: 1169700
+val_size: 77980
+
 # Which gpu for running. Running on cpu if `-1`
 gpu: 0
 

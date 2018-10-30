@@ -1,6 +1,7 @@
 import os
 import cv2 as cv
 import numpy as np
+import re
 from progressbar import ProgressBar
 
 
@@ -18,11 +19,11 @@ class AbstractData:
 
         self.batch_ptr = 0
 
-    def read(self, src_root):
+    def read(self, src_root, size=None):
         print('loading data...')
         images = []
         labels = []
-        with ProgressBar() as bar:
+        with ProgressBar(max_value=size) as bar:
             i = 0
             for parent_dir, _, filenames in os.walk(src_root):
                 for filename in filenames:
@@ -98,5 +99,7 @@ class RotationData(AbstractData):
 
 
 class SingleCharData(AbstractData):
+    ptn = re.compile("\d+_(\w+)\.(?:jpg|png|jpeg)")
+
     def filename2label(self, filename: str):
-        return filename[:-4].split("_")[1]
+        return SingleCharData.ptn.search(filename).group(1)
