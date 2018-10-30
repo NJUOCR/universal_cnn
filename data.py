@@ -1,6 +1,7 @@
 import os
 import re
 
+import cv2 as cv
 import numpy as np
 from progressbar import ProgressBar
 
@@ -43,10 +44,9 @@ class AbstractData:
                     #     )
                     # )
                     images.append(
-                        np.reshape(
-                            np.fromfile(os.path.join(parent_dir, filename), dtype=float),
-                            (self.height, self.width, 1)
-                        )[:, :, 0]/255.0
+                        cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0)
+                        .astype(np.float32)
+                        .reshape((self.height, self.width, 1)) / 255.
                     )
 
                     i += 1
