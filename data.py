@@ -33,14 +33,17 @@ class AbstractData:
                         self.label_map_reverse[next_idx] = lbl
                     labels.append(self.label_map[lbl])
                     images.append(
-                        np.reshape(
-                            cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
-                            (self.height, self.width, 1)
+                        np.array(
+                            np.reshape(
+                                cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
+                                (self.height, self.width, 1)
+                            ) / 255.0,
+                            dtype=float
                         )
                     )
                     i += 1
                     bar.update(i)
-        self.images = np.array([e/255.0 for e in images], dtype=float)
+        self.images = np.array(images)
         self.labels = np.array(labels)
         return self
 
