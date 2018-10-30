@@ -136,7 +136,7 @@ class Model:
         self.step = tf.train.get_or_create_global_step()
 
         self.loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
-        optimizer = tf.train.AdamOptimizer()
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
         with tf.control_dependencies(update_ops):
