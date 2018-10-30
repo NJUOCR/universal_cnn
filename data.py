@@ -20,7 +20,7 @@ class AbstractData:
         self.batch_ptr = 0
 
     def read(self, src_root, size=None):
-        print('loading data...')
+        print('loading data...[%d]' % size)
         images = []
         labels = []
         with ProgressBar(max_value=size) as bar:
