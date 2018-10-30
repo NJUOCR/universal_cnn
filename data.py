@@ -21,15 +21,19 @@ class AbstractData:
         self.batch_ptr = 0
 
     def load_char_map(self, file_path):
+        print('Loading char map from `%s`' % file_path, end='')
         with open(file_path, encoding='utf-8') as f:
             self.label_map = json.load(f)
         for k, v in self.label_map.items():
             self.label_map_reverse[v] = k
+        print('[done]')
         return self
 
     def dump_char_map(self, file_path):
+        print('Generating char map to `%s` ...' % file_path, end='')
         with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(self.label_map, f)
+            json.dump(self.label_map, f, ensure_ascii=False)
+        print('[done]')
         return self
 
     def clear_char_map(self):

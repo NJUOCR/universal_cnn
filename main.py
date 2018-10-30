@@ -32,11 +32,11 @@ class Main:
 
         val_data = Data(args['input_height'], args['input_width'], args['num_class'])\
             .read(args['dir_val'], size=args['val_size'], make_char_map=True)\
-            .dump_char_map('val.json')
+            .dump_char_map('label_maps/single_char.json')
         train_data = Data(args['input_height'], args['input_width'], args['num_class'])\
-            .read(args['dir_train'], size=args['train_size'], make_char_map=True)\
-            .shuffle_indices()\
-            .dump_char_map('train.json')
+            .load_char_map('label_maps/single_char.json')\
+            .read(args['dir_train'], size=args['train_size'], make_char_map=False)\
+            .shuffle_indices()
         print('start training')
 
         if args['restore']:
