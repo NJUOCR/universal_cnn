@@ -48,6 +48,8 @@ def generate_projection(src_root="/usr/local/src/data/doc_imgs",
                 line_splitters = proj.get_splitter(horizontal_sum_array)
                 img[line_splitters, :] = 0
                 for upper, lower in zip(line_splitters, line_splitters[1:]):
+                    print('lower=', lower)
+                    print('upper=', upper)
                     line_img = img[upper:lower, :]
                     vertical_sum_array = proj.project(line_img, direction='vertical', smooth=(max(5, (lower-upper)//6), 6))
                     char_splitter = proj.get_splitter(vertical_sum_array)

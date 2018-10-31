@@ -88,6 +88,30 @@ def draw_projective_histogram(img, direction='both', histogram_height=100, histo
     return container
 
 
+def get_splitter_horizontal(sum_array):
+    splitters = []
+    for i in range(1, len(sum_array)-1):
+        left, cur, right = sum_array[i-1:i+2]
+        cur_index = i
+        if cur == left == right:
+            continue
+        if cur <= min(left, right):
+            # splitters.append(i)
+            if i+20 < len(sum_array):
+                index = i
+                for j in range(index, index+20):
+                    if (abs(sum_array[j] - cur)) < 1:
+                        continue
+                    else:
+                        cur_index = j-1
+                        break
+            # if cur + 1.5 > left:
+            #     cur_index = i - 1
+            # if cur + 1.5 > right:
+            #     cur_index = i + 1
+            splitters.append(cur_index)
+    return splitters
+
 def get_splitter(sum_array):
     splitters = []
     for i in range(1, len(sum_array)-1):
