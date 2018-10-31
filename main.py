@@ -30,8 +30,13 @@ class Main:
         model.build()
         self.sess.run(tf.global_variables_initializer())
 
-        val_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_val'])
-        train_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_train'])
+        val_data = Data(args['input_height'], args['input_width'], args['num_class'])\
+            .read(args['dir_val'], size=args['val_size'], make_char_map=True)\
+            .dump_char_map('label_maps/single_char.json')
+        train_data = Data(args['input_height'], args['input_width'], args['num_class'])\
+            .load_char_map('label_maps/single_char.json')\
+            .read(args['dir_train'], size=args['train_size'], make_char_map=False)\
+            .shuffle_indices()
         print('start training')
 
         if args['restore']:
@@ -83,8 +88,6 @@ class Main:
                         tf.Summary.Value(tag="accuracy", simple_value=acc)
                     ])
                     writer.add_summary(custom_sm, step)
-                    print("val_cost is %f" % val_cost)
-                    print("val_sample is %d" % val_samples)
                     print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, loss))
                     cost_between_val = samples_between_val = 0
         self.save(step)

@@ -1,4 +1,6 @@
 import os
+import re
+import json
 import cv2 as cv
 import numpy as np
 from progressbar import ProgressBar
@@ -18,29 +20,47 @@ class AbstractData:
 
         self.batch_ptr = 0
 
-    def read(self, src_root):
-        print('loading data...')
+    def load_char_map(self, file_path):
+        print('Loading char map from `%s` ...\t' % file_path, end='')
+        with open(file_path, encoding='utf-8') as f:
+            self.label_map = json.load(f)
+        for k, v in self.label_map.items():
+            self.label_map_reverse[v] = k
+        print('[done]')
+        return self
+
+    def dump_char_map(self, file_path):
+        print('Generating char map to `%s` ...\t' % file_path, end='')
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(self.label_map, f, ensure_ascii=False)
+        print('[done]')
+        return self
+
+    def clear_char_map(self):
+        self.label_map_reverse = {}
+        self.label_map = {}
+        return self
+
+    def read(self, src_root, size=None, make_char_map=False):
+        print('loading data...%s' % '' if size is None else ("[%d]" % size))
         images = []
         labels = []
-        with ProgressBar() as bar:
-            i = 0
+        with ProgressBar(max_value=size) as bar:
             for parent_dir, _, filenames in os.walk(src_root):
                 for filename in filenames:
                     lbl = self.filename2label(filename)
-                    if lbl not in self.label_map:
+                    if make_char_map and lbl not in self.label_map:
                         next_idx = len(self.label_map)
                         self.label_map[lbl] = next_idx
                         self.label_map_reverse[next_idx] = lbl
                     labels.append(self.label_map[lbl])
                     images.append(
-                        np.reshape(
-                            cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0),
-                            (self.height, self.width, 1)
-                        )
+                        cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0)
+                        .astype(np.float32)
+                        .reshape((self.height, self.width, 1)) / 255.
                     )
-                    i += 1
-                    bar.update(i)
-        self.images = np.array([e/255.0 for e in images], dtype=float)
+                    bar.update(bar.value+1)
+        self.images = np.array(images)
         self.labels = np.array(labels)
         return self
 
@@ -52,11 +72,13 @@ class AbstractData:
         samples = self.size()
         self.indices = np.random.permutation(samples)
         self.batch_ptr = 0
+        return self
 
     def init_indices(self):
         samples = self.size()
         self.indices = np.arange(0, samples, dtype=np.int32)
         self.batch_ptr = 0
+        return self
 
     def next_batch(self, batch_size):
         start, end = self.batch_ptr, self.batch_ptr + batch_size
@@ -93,5 +115,7 @@ class RotationData(AbstractData):
 
 
 class SingleCharData(AbstractData):
+    ptn = re.compile("\d+_(\w+)\.(?:jpg|png|jpeg)")
+
     def filename2label(self, filename: str):
-        return filename[:-4].split("_")[1]
+        return SingleCharData.ptn.search(filename).group(1)
