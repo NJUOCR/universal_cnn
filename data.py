@@ -49,7 +49,7 @@ class AbstractData:
         :param make_char_map: whether to make a new charmap
         :return:
         """
-        print('loading data...%s' % '' if size is None else ("[%d]" % size))
+        print('loading data...%s' % '' if size is None else ("[%d]" % size), end='')
         images = []
         labels = []
         with ProgressBar(max_value=size) as bar:
@@ -69,6 +69,7 @@ class AbstractData:
                     bar.update(bar.value+1)
         self.images = np.array(images)
         self.labels = np.array(labels)
+        print('done')
         return self
 
     def filename2label(self, filename: str):
