@@ -1,5 +1,5 @@
 import os
-import numpy as np
+
 import tensorflow as tf
 
 from args import args
@@ -31,11 +31,11 @@ class Main:
         self.sess.run(tf.global_variables_initializer())
 
         val_data = Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map('label_maps/single_char.json') \
+            .load_char_map(args['charmap_path']) \
             .read(args['dir_val'], size=args['val_size'], make_char_map=True)
-            # .dump_char_map('label_maps/single_char.json')
+        # .dump_char_map('label_maps/single_char.json')
         train_data = Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map('label_maps/single_char.json') \
+            .load_char_map(args['charmap_path']) \
             .read(args['dir_train'], size=args['train_size'], make_char_map=False) \
             .shuffle_indices()
         print('start training')
@@ -100,7 +100,7 @@ class Main:
         print("start inferring")
         batch_size = batch_size or args['batch_size']
         infer_data = infer_data or Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map(args['charmap_path'])\
+            .load_char_map(args['charmap_path']) \
             .read(args['dir_infer']) \
             .init_indices()
 

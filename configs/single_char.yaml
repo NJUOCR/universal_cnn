@@ -6,6 +6,9 @@ restore: false
 # checkpoint directory
 ckpt: ./checkpoint
 
+# charmap path
+charmap_path: label_maps/single_char.json
+
 dir_train: /usr/local/src/data/sc/val
 dir_val: /usr/local/src/data/sc/val
 dir_infer: ./data/infer
