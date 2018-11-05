@@ -56,13 +56,15 @@ def to_size(img, height = 64, width = 64):
     img_height = top - height
     img_width = right - left
     if img_height <= height:
-        new_top = top - (height - img_height)//2
-        new_bottom = height - top
+        new_top = (height - img_height)//2
+        new_bottom = height - img_height - new_top
     elif img_width <= width:
-        new_left = width - (right - left)//2
-        new_right = width - new_left
+        new_left = (right - left)//2
+        new_right = width - new_left - img_width
+    # out_img = cv.copyMakeBorder(img, 10, 10, 10, 10, cv.BORDER_CONSTANT, value=0)
     out_img = cv.copyMakeBorder(img, new_top, new_bottom, new_left, new_right, cv.BORDER_CONSTANT, value=0)
     # cv.imshow("src", out_img)
+    print(new_top, new_bottom, new_left, new_right)
     uimg.save("out_img.jpg", out_img)
     return out_img
 
