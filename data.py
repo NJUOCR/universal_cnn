@@ -42,6 +42,13 @@ class AbstractData:
         return self
 
     def read(self, src_root, size=None, make_char_map=False):
+        """
+
+        :param src_root: the root directory containing all the data to be read
+        :param size: the total number of the data set
+        :param make_char_map: whether to make a new charmap
+        :return:
+        """
         print('loading data...%s' % '' if size is None else ("[%d]" % size))
         images = []
         labels = []
@@ -89,6 +96,12 @@ class AbstractData:
             indices = [self.indices[i] for i in range(start, end)]
             self.batch_ptr = end
             return self.images[indices], self.labels[indices]
+
+    def unmap(self, src):
+        if isinstance(src, list):
+            return list(map(lambda el: self.label_map_reverse[el], src))
+        else:
+            return self.label_map_reverse[src]
 
     def get(self):
         return self.images, self.labels

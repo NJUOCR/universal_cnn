@@ -1,5 +1,5 @@
 import os
-
+import numpy as np
 import tensorflow as tf
 
 from args import args
@@ -30,12 +30,13 @@ class Main:
         model.build()
         self.sess.run(tf.global_variables_initializer())
 
-        val_data = Data(args['input_height'], args['input_width'], args['num_class'])\
-            .read(args['dir_val'], size=args['val_size'], make_char_map=True)\
-            .dump_char_map('label_maps/single_char.json')
-        train_data = Data(args['input_height'], args['input_width'], args['num_class'])\
-            .load_char_map('label_maps/single_char.json')\
-            .read(args['dir_train'], size=args['train_size'], make_char_map=False)\
+        val_data = Data(args['input_height'], args['input_width'], args['num_class']) \
+            .load_char_map('label_maps/single_char.json') \
+            .read(args['dir_val'], size=args['val_size'], make_char_map=True)
+            # .dump_char_map('label_maps/single_char.json')
+        train_data = Data(args['input_height'], args['input_width'], args['num_class']) \
+            .load_char_map('label_maps/single_char.json') \
+            .read(args['dir_train'], size=args['train_size'], make_char_map=False) \
             .shuffle_indices()
         print('start training')
 
@@ -92,31 +93,39 @@ class Main:
                     cost_between_val = samples_between_val = 0
         self.save(step)
 
-    def infer(self):
+    def infer(self, infer_data=None, batch_size=None, ckpt_dir=None):
         model = Model(args['input_width'], args['input_height'], args['num_class'], 'infer')
         model.build()
-        self.restore()
+        self.restore(ckpt_dir=ckpt_dir)
         print("start inferring")
-        batch_size = args['batch_size']
-        infer_data = Data(args['input_height'], args['input_width'], args['num_class'])
-        infer_data.read(args['dir_infer'])
-        infer_data.init_indices()
+        batch_size = batch_size or args['batch_size']
+        infer_data = infer_data or Data(args['input_height'], args['input_width'], args['num_class']) \
+            .load_char_map(args['charmap_path'])\
+            .read(args['dir_infer']) \
+            .init_indices()
+
         infer_batch = infer_data.next_batch(batch_size)
         self.sess.run(tf.local_variables_initializer())
+
+        buff = []
         while infer_batch is not None:
             infer_images, infer_labels = infer_batch
             infer_feed_dict = model.feed(infer_images, infer_labels)
-            classes = self.sess.run([model.classes],
+            classes = self.sess.run(model.classes,
                                     feed_dict=infer_feed_dict)
+            buff += infer_data.unmap(classes.tolist())
+            infer_batch = infer_data.next_batch(batch_size)
+        return buff
 
-    def restore(self):
+    def restore(self, ckpt_dir=None):
         self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
-        ckpt = tf.train.latest_checkpoint(args['ckpt'])
+        ckpt_dir = ckpt_dir or args['ckpt']
+        ckpt = tf.train.latest_checkpoint(ckpt_dir)
         if ckpt:
             self.saver.restore(self.sess, ckpt)
-            print('successfully restored from %s' % args['ckpt'])
+            print('successfully restored from %s' % ckpt_dir)
         else:
-            print('cannot restore from %s' % args['ckpt'])
+            print('cannot restore from %s' % ckpt_dir)
 
     def save(self, step):
         if self.saver is None:

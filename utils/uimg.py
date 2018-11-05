@@ -43,8 +43,8 @@ def auto_bin(img):
     # 自适应二值化
     img_at_mean = cv.adaptiveThreshold(img_grey, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 47, 10)
 
-
     return img_at_mean
+
 
 # 腐蚀
 def erode_img(img, kernal_heght, kernal_width):
@@ -79,5 +79,3 @@ def replace_color(img, bgr, old_val_bound, new_val):
                 img[i, j] = (255, 255, 255)
     save("dst_change_color.jpg", img)
     return img
-
-
