@@ -1,5 +1,6 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
+import cv2 as cv
 
 # 计算横向或者竖向每列非白像素的个数，image:传入的图像; direction：0->列，1->行
 def calculate_pixel(image, axis):
@@ -18,7 +19,6 @@ def calculate_pixel(image, axis):
     pixel_sum = np.sum(img_matrix, axis=axis)
 
     return pixel_sum
-
 
 def project(img, direction='vertical', smooth=None):
     """
@@ -116,3 +116,304 @@ def get_splitter(sum_array):
         if cur <= min(left, right):
             splitters.append(i)
     return splitters
+
+# 画直方图
+def draw_images(sum_array):
+    plt.plot(sum_array, range(sum_array.shape[0]))
+    plt.gca().invert_yaxis()
+    plt.show()
+
+
+def extract_peek_array(array_vals, minimun_val = 20, minimum_range= 2 ):
+    start_i = None
+    end_i = None
+    peek_ranges = []
+    for i, val in enumerate(array_vals):
+        if val > minimun_val and start_i is None:
+            start_i = i
+        elif val >= minimun_val and start_i is not None:
+            pass
+        elif val < minimun_val and start_i is not None:
+            end_i = i
+            if end_i - start_i >= minimum_range:
+                peek_ranges.append((start_i, end_i))
+            start_i = None
+            end_i = None
+        elif val <= minimun_val and start_i is None:
+            pass
+        else:
+            raise ValueError("cannot pass this case")
+    print(peek_ranges)
+    return peek_ranges
+
+def draw_line(sum_array, img):
+    peek_ranges = extract_peek_array(sum_array)
+    line_seg = np.copy(img)
+    for i, peek_ranges in enumerate(peek_ranges):
+        x = 0
+        y = peek_ranges[0]
+        w = line_seg.shape[1]
+        h = peek_ranges[1] - y
+        pt1 = (x, y)
+        pt2 = (x + w, y + h)
+        cv.rectangle(line_seg, pt1, pt2, 255)
+    return line_seg
+    # cv.imshow('line image', line_seg)
+    # cv.waitKey(0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

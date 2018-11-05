@@ -1,4 +1,6 @@
 import numpy as np
+import cv2 as cv
+import utils.uimg as uimg
 
 
 def get_bounds(img, foreground_color='black'):
@@ -12,6 +14,7 @@ def get_bounds(img, foreground_color='black'):
     """
     assert foreground_color in ('white', 'black')
     h, w = img.shape
+    # print(h, w)
     background_vertical = np.zeros((h,), np.uint8) if foreground_color == 'white' else np.ones((h,), np.uint8) * 255
     background_horizontal = np.zeros((w,), np.uint8) if foreground_color == 'white' else np.ones((w,), np.uint8) * 255
     for left in range(w):
@@ -38,8 +41,32 @@ def get_bounds(img, foreground_color='black'):
     else:
         bottom = None
 
+    # print(top, left, bottom, right)
     return top, left, bottom, right
 
 
-def to_size(img, height, width):
-    pass
+# make size to [64, 64]
+def to_size(img, height = 64, width = 64):
+    top, left, bottom, right = get_bounds(img, 'black')
+# 如果小于64,进行边缘补齐
+    new_left = 0
+    new_right = 0
+    new_bottom = 0
+    new_top = 0
+    img_height = top - height
+    img_width = right - left
+    if img_height <= height:
+        new_top = top - (height - img_height)//2
+        new_bottom = height - top
+    elif img_width <= width:
+        new_left = width - (right - left)//2
+        new_right = width - new_left
+    out_img = cv.copyMakeBorder(img, new_top, new_bottom, new_left, new_right, cv.BORDER_CONSTANT, value=0)
+    # cv.imshow("src", out_img)
+    uimg.save("out_img.jpg", out_img)
+    return out_img
+
+if __name__ == '__main__':
+    img = uimg.read('/home/stone/PycharmProjects/universal_cnn/2.jpg')
+    # get_bounds(img)
+    to_size(img, 64, 64)
