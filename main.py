@@ -1,7 +1,6 @@
 import os
 
 import tensorflow as tf
-
 from args import args, cmd_args
 from data import SingleCharData as Data
 # from data import RotationData as Data
@@ -169,5 +168,5 @@ def main(_):
 
 if __name__ == '__main__':
     tf.logging.set_verbosity('INFO')
-    cmd_args.mode = 'infer'
+    # cmd_args.mode = 'infer'
     tf.app.run()
