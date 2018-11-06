@@ -4,10 +4,10 @@ name: single_char
 mode: 'train'
 
 # restore training from latest checkpoint
-restore: true
+restore: false
 
 # checkpoint directory
-ckpt: ./ckpts/single_char_1105
+ckpt: ./ckpts/single_char_1106
 
 # tensorboard log directory
 tb_dir: ./tb/2
@@ -17,7 +17,7 @@ charmap_path: label_maps/single_char.json
 
 infer_output_path: ./infer.txt
 
-dir_train: /usr/local/src/data/sc/train_1000
+dir_train: /usr/local/src/data/sc/train_1000_font_resized
 dir_val: /usr/local/src/data/sc/val_50
 dir_infer: /usr/local/src/data/sc/hight_error
 
