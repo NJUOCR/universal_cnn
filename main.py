@@ -2,7 +2,7 @@ import os
 
 import tensorflow as tf
 
-from args import args
+from args import args, cmd_args
 from data import SingleCharData as Data
 # from data import RotationData as Data
 from models.single_char_model import Model
@@ -20,7 +20,7 @@ class Main:
         if mode in ('train',):
             self.train()
         elif mode in ('infer', 'pred'):
-            self.infer()
+            self.infer(dump=True)
         else:
             print('%s ??' % mode)
 
@@ -44,7 +44,7 @@ class Main:
             self.restore()
 
         # init tensorboard
-        writer = tf.summary.FileWriter("tb")
+        writer = tf.summary.FileWriter(args['tb_dir'])
 
         # start training
         step = 0
@@ -93,7 +93,7 @@ class Main:
                     cost_between_val = samples_between_val = 0
         self.save(step)
 
-    def infer(self, infer_data=None, batch_size=None, ckpt_dir=None):
+    def infer(self, infer_data=None, batch_size=None, ckpt_dir=None, dump=False):
         model = Model(args['input_width'], args['input_height'], args['num_class'], 'infer')
         model.build()
         self.restore(ckpt_dir=ckpt_dir)
@@ -115,6 +115,13 @@ class Main:
                                     feed_dict=infer_feed_dict)
             buff += infer_data.unmap(classes.tolist())
             infer_batch = infer_data.next_batch(batch_size)
+
+        if not dump:    return buff
+
+        with open(args['infer_output_path'], 'w', encoding='utf-8') as f:
+            for infer, label in zip(buff, infer_data.labels):
+                f.write("%s - %s\n" % (infer, infer_data.unmap(label)))
+        print("infer result dumped to %s" % args['infer_output_path'])
         return buff
 
     def restore(self, ckpt_dir=None):
@@ -156,13 +163,11 @@ def main(_):
     else:
         dev = '/gpu:%d' % args['gpu']
 
-    # with tf.device(dev):
-    #     print('---')
-    #     print(dev)
-    #     m.run('train')
-    m.run('train')
+    with tf.device(dev):
+        m.run(cmd_args.mode)
 
 
 if __name__ == '__main__':
     tf.logging.set_verbosity('INFO')
+    cmd_args.mode = 'infer'
     tf.app.run()

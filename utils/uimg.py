@@ -79,3 +79,43 @@ def replace_color(img, bgr, old_val_bound, new_val):
                 img[i, j] = (255, 255, 255)
     save("dst_change_color.jpg", img)
     return img
+
+
+def fit_resize(img, new_height, new_width):
+    height, width = img.shape[:2]
+    h_rate = height / new_height
+    w_rate = width / new_width
+
+    # if h_rate > 1 and w_rate > 1:
+    #     rate = max(h_rate, w_rate)
+    # elif h_rate > 1 and w_rate < 1:
+    #     rate = h_rate
+    # elif h_rate < 1 and w_rate > 1:
+    #     rate = w_rate
+    # elif h_rate < 1 and w_rate < 1:
+    #     rate = max()
+    rate = max(h_rate, w_rate)
+    dsize = int(width/rate), int(height/rate)
+    return cv.resize(img, dsize)
+
+
+def pad_to(img, new_height, new_width, padding_val):
+    height, width = img.shape[:2]
+    assert height <= new_height and width <= new_width
+    top = (new_height - height) // 2
+    bottom = new_height - height - top
+    left = (new_width - width) // 2
+    right = new_width - width - left
+    out_img = cv.copyMakeBorder(img, top, bottom, left, right, cv.BORDER_CONSTANT, value=padding_val)
+    return out_img
+
+
+if __name__ == '__main__':
+    import random as rd
+
+    for i in range(20):
+        h, w = rd.randint(30, 80), rd.randint(30, 80)
+        origin = np.ones((h, w), dtype=np.uint8) * 255
+        fit = fit_resize(origin, 64, 64)
+        out = pad_to(fit, 64, 64, 100)
+        save("/usr/local/src/data/%d_%dx%d.png" % (i, h, w), out)

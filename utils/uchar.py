@@ -1,5 +1,6 @@
-import numpy as np
 import cv2 as cv
+import numpy as np
+
 import utils.uimg as uimg
 
 
@@ -41,34 +42,29 @@ def get_bounds(img, foreground_color='black'):
     else:
         bottom = None
 
-    print(top, left, bottom, right)
     return top, left, bottom, right
 
 
-# make size to [64, 64]
-def to_size(img, height = 64, width = 64):
-    top, left, bottom, right = get_bounds(img, 'black')
-# 如果小于64,进行边缘补齐
-    new_left = 0
-    new_right = 0
-    new_bottom = 0
-    new_top = 0
-    img_height = bottom - top
-    img_width = right - left
-    if img_height <= height:
-        new_top = (height - img_height)//2
-        new_bottom = height - img_height - new_top
-    elif img_width <= width:
-        new_left = (right - left)//2
-        new_right = width - new_left - img_width
-    # out_img = cv.copyMakeBorder(img, 10, 10, 10, 10, cv.BORDER_CONSTANT, value=0)
+def to_size(img, height, width):
+    top, left, bottom, right = get_bounds(img, foreground_color='black')
+    # 如果小于64,进行边缘补齐
+    new_left = new_right = new_bottom = new_top = 0
+    text_height = bottom - top
+    text_width = right - left
+    if text_height <= height:
+        new_top = (height - text_height) // 2
+        new_bottom = height - text_height - new_top
+    elif text_width <= width:
+        new_left = (right - left) // 2
+        new_right = width - new_left - text_width
     out_img = cv.copyMakeBorder(img, new_top, new_bottom, new_left, new_right, cv.BORDER_CONSTANT, value=0)
     # cv.imshow("src", out_img)
     # print(new_top, new_bottom, new_left, new_right)
     uimg.save("out_img4.jpg", out_img)
     return out_img
 
+
 if __name__ == '__main__':
-    img = uimg.read('/home/stone/PycharmProjects/universal_cnn/4.jpg')
+    _img = uimg.read('/home/stone/PycharmProjects/universal_cnn/4.jpg')
     # get_bounds(img)
-    to_size(img, 64, 64)
+    to_size(_img, 64, 64)
