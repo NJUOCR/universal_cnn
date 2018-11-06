@@ -1,5 +1,8 @@
 name: single_char
 
+# `train` or `infer`, will be override by cmd args
+mode: 'train'
+
 # restore training from latest checkpoint
 restore: true
 
@@ -25,8 +28,6 @@ val_size: 194950
 # Which gpu for running. Running on cpu if `-1`
 gpu: 0
 
-# `train` or `infer`, will be override by cmd args
-mode: 'train'
 
 # input image size
 input_width: 64

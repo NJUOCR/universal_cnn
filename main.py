@@ -1,7 +1,7 @@
 import os
 
 import tensorflow as tf
-from args import args, cmd_args
+from args import args
 from data import SingleCharData as Data
 # from data import RotationData as Data
 from models.single_char_model import Model
@@ -163,7 +163,7 @@ def main(_):
         dev = '/gpu:%d' % args['gpu']
 
     with tf.device(dev):
-        m.run(cmd_args.mode)
+        m.run(args['mode'])
 
 
 if __name__ == '__main__':

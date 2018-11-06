@@ -3,6 +3,7 @@ import re
 import json
 import cv2 as cv
 import numpy as np
+import gc
 from progressbar import ProgressBar
 
 
@@ -69,6 +70,9 @@ class AbstractData:
                     bar.update(bar.value+1)
         self.images = np.array(images)
         self.labels = np.array(labels)
+        del images
+        del labels
+        gc.collect()
         return self
 
     def filename2label(self, filename: str):
@@ -132,3 +136,27 @@ class SingleCharData(AbstractData):
 
     def filename2label(self, filename: str):
         return SingleCharData.ptn.search(filename).group(1)
+
+
+class QuickSingleCharData(SingleCharData):
+
+    def read(self, src_root, size=None, make_char_map=False):
+        assert size is not None
+        self.images = np.empty((size, self.height, self.width, 1), dtype=np.uint8)
+        self.labels = np.empty((size,))
+        print('space for data is allocated')
+        ptr = 0
+        with ProgressBar(max_value=size) as bar:
+            for parent_dir, _, filenames in os.walk(src_root):
+                for filename in filenames:
+                    lbl = self.filename2label(filename)
+                    if make_char_map and lbl not in self.label_map:
+                        next_idx = len(self.label_map)
+                        self.label_map[lbl] = next_idx
+                        self.label_map_reverse[next_idx] = lbl
+                    self.labels[ptr] = self.label_map[lbl]
+                    self.images[ptr] = cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0)\
+                        .astype(np.float32)\
+                        .reshape((self.height, self.width, 1)) / 255.
+                    ptr += 1
+                    bar.update(bar.value+1)
