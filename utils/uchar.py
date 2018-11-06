@@ -41,7 +41,7 @@ def get_bounds(img, foreground_color='black'):
     else:
         bottom = None
 
-    # print(top, left, bottom, right)
+    print(top, left, bottom, right)
     return top, left, bottom, right
 
 
@@ -53,7 +53,7 @@ def to_size(img, height = 64, width = 64):
     new_right = 0
     new_bottom = 0
     new_top = 0
-    img_height = top - height
+    img_height = bottom - top
     img_width = right - left
     if img_height <= height:
         new_top = (height - img_height)//2
@@ -64,11 +64,11 @@ def to_size(img, height = 64, width = 64):
     # out_img = cv.copyMakeBorder(img, 10, 10, 10, 10, cv.BORDER_CONSTANT, value=0)
     out_img = cv.copyMakeBorder(img, new_top, new_bottom, new_left, new_right, cv.BORDER_CONSTANT, value=0)
     # cv.imshow("src", out_img)
-    print(new_top, new_bottom, new_left, new_right)
-    uimg.save("out_img.jpg", out_img)
+    # print(new_top, new_bottom, new_left, new_right)
+    uimg.save("out_img4.jpg", out_img)
     return out_img
 
 if __name__ == '__main__':
-    img = uimg.read('/home/stone/PycharmProjects/universal_cnn/2.jpg')
+    img = uimg.read('/home/stone/PycharmProjects/universal_cnn/4.jpg')
     # get_bounds(img)
     to_size(img, 64, 64)
