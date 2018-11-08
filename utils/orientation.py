@@ -11,7 +11,8 @@ def fix_orientation(img):
     """
     # todo 文字倾斜校正
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    padded_matrix = image_padded(gray)
+    binary_matrix = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 47, 10)
+    padded_matrix = image_padded(binary_matrix)
     hough_lines = image_dft(padded_matrix)
     des_angle = calculate_angle(hough_lines, img)
     result_image = image_rotated(des_angle, img)
@@ -37,7 +38,7 @@ def image_dft(image):
     forier_matrix_magnitude = np.log(np.abs(forier_matrix_shift))
     # 二值化
     forier_matrix_magnitude = forier_matrix_magnitude.astype(np.uint8)
-    ret, threshold_matrix = cv.threshold(forier_matrix_magnitude, 11, 255, cv.THRESH_BINARY)   # 11这个阈值 可能需要根据情况变换
+    ret, threshold_matrix = cv.threshold(forier_matrix_magnitude, 13, 255, cv.THRESH_BINARY)   # 11这个阈值 可能需要根据情况变换
     # cv.imshow("wwq", threshold_matrix)
     # 霍夫直线变换
     lines = cv.HoughLinesP(threshold_matrix, 2, np.pi/180, 30, minLineLength=0, maxLineGap=100)
@@ -49,6 +50,9 @@ def calculate_angle(lines, image):
     angle = 0.0
     piThresh = np.pi/90
     pi2 = np.pi/2
+    lenIndex = []
+    thetaIndex = []
+    lines_dIndex = []
     for line in lines:
         x1, y1, x2, y2 = line[0]
         theta = abs(np.arctan2(y2 - y1, x2 - x1))   # 如果不是绝对值  有可能angle是负的  即 p2 比 p1 小
@@ -56,16 +60,30 @@ def calculate_angle(lines, image):
         if abs(theta) < piThresh or abs(theta - pi2) < piThresh:
             continue
         else:
-            angle = theta
-            break
+            lenIndex.append((x2-x1)**2 + (y2-y1)**2)
+            thetaIndex.append(theta)
+            lines_dIndex.append(lines_direction)
+    current_max = 0
+    for i in range(len(lenIndex)):
+        if lenIndex[0] < lenIndex[i]:
+            current_max = i
+            lenIndex[0], lenIndex[i] = lenIndex[i], lenIndex[0]
+    if len(thetaIndex) == 0:
+        return angle
+    angle = thetaIndex[current_max]
+    lines_direction = lines_dIndex[current_max]
     if angle >= pi2:
         angle = angle - np.pi
     if angle != pi2:
         anglet = width * np.tan(angle) / height
         angle = np.arctan(anglet)
     angle = angle * (180 / np.pi)
-    if lines_direction > 0:    # 方向判断，还需要改进一下
-        angle = angle - 90
+    if lines_direction > 0:
+        # angle = angle - 90
+        if angle > 45:
+            angle = angle - 90
+        else:
+            angle = angle
     else:
         angle = 90 - angle
     return angle
