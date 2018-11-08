@@ -2,7 +2,6 @@ import gc
 import json
 import os
 import re
-
 import cv2 as cv
 import numpy as np
 from progressbar import ProgressBar
