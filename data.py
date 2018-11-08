@@ -1,9 +1,10 @@
+import gc
+import json
 import os
 import re
-import json
+
 import cv2 as cv
 import numpy as np
-import gc
 from progressbar import ProgressBar
 
 
@@ -42,6 +43,13 @@ class AbstractData:
         self.label_map = {}
         return self
 
+    def set_images(self, images: list):
+        self.images = np.empty((len(images), self.height, self.width, 1), dtype=float)
+        self.labels = np.zeros((len(images),), dtype=int)
+        for i, img in enumerate(images):
+            self.images[i] = img.reshape(self.height, self.width, 1).astype(float) / 255
+        return self
+
     def read(self, src_root, size=None, make_char_map=False):
         """
 
@@ -67,7 +75,7 @@ class AbstractData:
                         .astype(np.float32)
                         .reshape((self.height, self.width, 1)) / 255.
                     )
-                    bar.update(bar.value+1)
+                    bar.update(bar.value + 1)
         self.images = np.array(images)
         self.labels = np.array(labels)
         del images
@@ -155,8 +163,8 @@ class QuickSingleCharData(SingleCharData):
                         self.label_map[lbl] = next_idx
                         self.label_map_reverse[next_idx] = lbl
                     self.labels[ptr] = self.label_map[lbl]
-                    self.images[ptr] = cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0)\
-                        .astype(np.float32)\
-                        .reshape((self.height, self.width, 1)) / 255.
+                    self.images[ptr] = cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0) \
+                                           .astype(np.float32) \
+                                           .reshape((self.height, self.width, 1)) / 255.
                     ptr += 1
-                    bar.update(bar.value+1)
+                    bar.update(bar.value + 1)

@@ -85,18 +85,13 @@ def fit_resize(img, new_height, new_width):
     height, width = img.shape[:2]
     h_rate = height / new_height
     w_rate = width / new_width
-
-    # if h_rate > 1 and w_rate > 1:
-    #     rate = max(h_rate, w_rate)
-    # elif h_rate > 1 and w_rate < 1:
-    #     rate = h_rate
-    # elif h_rate < 1 and w_rate > 1:
-    #     rate = w_rate
-    # elif h_rate < 1 and w_rate < 1:
-    #     rate = max()
     rate = max(h_rate, w_rate)
     dsize = int(width/rate), int(height/rate)
-    return cv.resize(img, dsize)
+    try:
+        resized_img = cv.resize(img, dsize)
+        return pad_to(resized_img, new_height, new_width, 255)
+    except cv.error:
+        return None
 
 
 def pad_to(img, new_height, new_width, padding_val):
