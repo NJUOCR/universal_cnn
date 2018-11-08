@@ -4,26 +4,26 @@ name: single_char
 mode: 'train'
 
 # restore training from latest checkpoint
-restore: true
+restore: false
 
 # checkpoint directory
-ckpt: ./ckpts/single_char_1105
+ckpt: ./ckpts/single_char_1106
 
 # tensorboard log directory
 tb_dir: ./tb/2
 
 # charmap path
-charmap_path: label_maps/single_char.json
+charmap_path: label_maps/single_char_1107.json
 
 infer_output_path: ./infer.txt
 
-dir_train: /usr/local/src/data/sc/train_1000
-dir_val: /usr/local/src/data/sc/val_50
+dir_train: /usr/local/src/data/sc/train_1000_1106
+dir_val: /usr/local/src/data/sc/val_50_1106
 dir_infer: /usr/local/src/data/sc/hight_error
 
 # [optional] size of dataset
-train_size: 3899000
-val_size: 194950
+train_size: 3900000
+val_size: 195000
 
 # Which gpu for running. Running on cpu if `-1`
 gpu: 0
@@ -37,7 +37,7 @@ input_height: 64
 batch_size: 128
 
 # number of classes
-num_class: 3899
+num_class: 3900
 
 # number of epochs
 num_epochs: 100

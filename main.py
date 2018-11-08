@@ -30,9 +30,8 @@ class Main:
         self.sess.run(tf.global_variables_initializer())
 
         val_data = Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map(args['charmap_path']) \
-            .read(args['dir_val'], size=args['val_size'], make_char_map=True)
-        # .dump_char_map('label_maps/single_char.json')
+            .read(args['dir_val'], size=args['val_size'], make_char_map=True) \
+            .dump_char_map('label_maps/single_char_1107.json')
         train_data = Data(args['input_height'], args['input_width'], args['num_class']) \
             .load_char_map(args['charmap_path']) \
             .read(args['dir_train'], size=args['train_size'], make_char_map=False) \

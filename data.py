@@ -76,7 +76,7 @@ class AbstractData:
         return self
 
     def filename2label(self, filename: str):
-        # return filename.split('_')[-1].split('.')[0]
+        return filename.split('_')[-1].split('.')[0]
         raise Exception('filename2label not implement')
 
     def shuffle_indices(self):
@@ -133,9 +133,11 @@ class RotationData(AbstractData):
 
 class SingleCharData(AbstractData):
     ptn = re.compile("\d+_(\w+)\.(?:jpg|png|jpeg)")
-
     def filename2label(self, filename: str):
-        return SingleCharData.ptn.search(filename).group(1)
+        if SingleCharData.ptn.search(filename) == None:
+            return " "
+        else:
+            return SingleCharData.ptn.search(filename).group(1)
 
 
 class QuickSingleCharData(SingleCharData):
