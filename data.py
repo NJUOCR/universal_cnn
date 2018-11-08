@@ -143,7 +143,8 @@ class SingleCharData(AbstractData):
     ptn = re.compile("\d+_(\w+)\.(?:jpg|png|jpeg)")
 
     def filename2label(self, filename: str):
-        return SingleCharData.ptn.search(filename).group(1)
+        m = SingleCharData.ptn.search(filename)
+        return m.group(1) if m else ' '
 
 
 class QuickSingleCharData(SingleCharData):
