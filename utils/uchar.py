@@ -1,3 +1,5 @@
+from queue import Queue
+
 import cv2 as cv
 import numpy as np
 
@@ -64,7 +66,58 @@ def to_size(img, height, width):
     return out_img
 
 
+def contains_text(img):
+    h, w = img.shape[:2]
+
+    def is_foreground(_y, _x):
+        return img[_y][_x] == 0
+
+    def is_in(_y, _x):
+        return 0 <= _y < h and 0 <= _x < w
+
+    visited = {}
+    components = []
+    for y in range(h):
+        for x in range(w):
+            if (y, x) in visited:
+                continue
+            elif not is_foreground(y, x):
+                visited[y,x] = True
+            else:
+                # not visited and is foreground (text)
+                cnt = 0
+                q = Queue()
+                q.put((y, x))
+                while not q.empty():
+                    cnt += 1
+                    cur_y, cur_x = q.get()
+                    visited[cur_y, cur_x] = True
+                    nbrs = [(cur_y-1, cur_x), (cur_y+1, cur_x), (cur_y, cur_x-1), (cur_y, cur_x+1)]
+                    for nbr_y, nbr_x in nbrs:
+                        if (nbr_y, nbr_x) in visited:
+                            continue
+                        if is_in(nbr_y, nbr_x):
+                            visited[nbr_y, nbr_x] = True
+
+                        if is_in(nbr_y, nbr_x) and is_foreground(nbr_y, nbr_x):
+                            q.put((nbr_y, nbr_x))
+                components.append(cnt)
+
+    # todo 根据`components`判断该图片是否包含文字，返回值改为True|False
+    return components
+
+
 if __name__ == '__main__':
-    _img = uimg.read('/home/stone/PycharmProjects/universal_cnn/4.jpg')
-    # get_bounds(img)
-    to_size(_img, 64, 64)
+    # _img = uimg.read('/home/stone/PycharmProjects/universal_cnn/4.jpg')
+    # # get_bounds(img)
+    # to_size(_img, 64, 64)
+    import os
+    print(os.getcwd())
+    for filename in os.listdir('char_split_output/822_1169'):
+        im = uimg.read(os.path.join('char_split_output/822_1169', filename))
+        _, im = cv.threshold(im, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        coms = contains_text(im)
+        print(coms)
+        cv.imshow('', im)
+        cv.waitKey(0)
+        cv.destroyAllWindows()

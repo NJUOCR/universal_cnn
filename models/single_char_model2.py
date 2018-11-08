@@ -28,7 +28,6 @@ class Model:
             self.labels: labels
         }
 
-# Todo
     def build(self):
         images = self.images
         labels = self.labels
