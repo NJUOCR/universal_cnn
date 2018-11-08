@@ -4,7 +4,7 @@ import tensorflow as tf
 from args import args
 from data import SingleCharData as Data
 # from data import RotationData as Data
-from models.single_char_model import Model
+from models.single_char_model2 import Model
 
 
 class Main:
@@ -91,8 +91,12 @@ class Main:
                     cost_between_val = samples_between_val = 0
         self.save(step)
 
-    def infer(self, infer_data=None, batch_size=None, ckpt_dir=None, dump=False):
-        model = Model(args['input_width'], args['input_height'], args['num_class'], 'infer')
+    def infer(self, infer_data=None, input_width=None, input_height=None, num_class=None, batch_size=None, ckpt_dir=None, dump=False):
+        input_width = input_width or args['input_width']
+        input_height = input_height or args['input_height']
+        num_class = num_class or args['num_class']
+
+        model = Model(input_width, input_height, num_class, 'infer')
         model.build()
         self.restore(ckpt_dir=ckpt_dir)
         print("start inferring")
