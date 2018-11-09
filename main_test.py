@@ -1,10 +1,11 @@
 import os
-
+import re
 import tensorflow as tf
+
 from args import args
 from data import SingleCharData as Data
 # from data import RotationData as Data
-from models.single_char_model2 import Model
+from models.single_char_model import Model
 
 
 class Main:
@@ -16,34 +17,25 @@ class Main:
 
     def run(self, mode):
         self.sess.run(tf.global_variables_initializer())
-        if mode in ('train',):
+        if mode in ('train', ):
             self.train()
         elif mode in ('infer', 'pred'):
-            self.infer(dump=True)
+            self.infer()
         else:
             print('%s ??' % mode)
 
     def train(self):
+        print('start training')
 
         model = Model(args['input_width'], args['input_height'], args['num_class'], 'train')
         model.build()
         self.sess.run(tf.global_variables_initializer())
 
-        val_data = Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map(args['charmap_path']) \
-            .read(args['dir_val'], size=args['val_size'], make_char_map=True)
-        # .dump_char_map('label_maps/single_char.json')
-        train_data = Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map(args['charmap_path']) \
-            .read(args['dir_train'], size=args['train_size'], make_char_map=True) \
-            .shuffle_indices()
-        print('start training')
+        val_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_val'])
+        train_data = Data(args['input_height'], args['input_width'], args['num_class']).read(args['dir_train'])
 
         if args['restore']:
             self.restore()
-
-        # init tensorboard
-        writer = tf.summary.FileWriter(args['tb_dir'])
 
         # start training
         step = 0
@@ -77,70 +69,49 @@ class Main:
                     while val_batch is not None:
                         val_image, val_labels = val_batch
                         val_feed_dict = model.feed(val_image, val_labels)
-                        loss, _acc, acc = self.sess.run(
-                            [model.loss, model.val_acc_update_op, model.val_acc],
-                            feed_dict=val_feed_dict)
+                        loss, _acc, acc = self.sess.run([model.loss, model.val_acc_update_op, model.val_acc],
+                                                        feed_dict=val_feed_dict)
                         val_cost += loss
                         val_samples += batch_size
                         val_batch = val_data.next_batch(batch_size)
-                    loss = val_cost / val_samples
-                    custom_sm = tf.Summary(value=[
-                        tf.Summary.Value(tag="accuracy", simple_value=acc)
-                    ])
-                    writer.add_summary(custom_sm, step)
-                    print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, loss))
+                    tf.summary.scalar('average_batch_loss', val_cost / val_samples)
+                    tf.summary.scalar('accuracy', acc)
+                    print("val_cost is %f"%val_cost)
+                    print("val_sample is %d"%val_samples)
+                    print("#validation: accuracy=%.6f,\t average_batch_loss:%.4f" % (acc, val_cost / val_samples))
                     cost_between_val = samples_between_val = 0
         self.save(step)
 
-    def infer(self, infer_data=None, input_width=None, input_height=None, num_class=None, batch_size=None, ckpt_dir=None, dump=False):
-        input_width = input_width or args['input_width']
-        input_height = input_height or args['input_height']
-        num_class = num_class or args['num_class']
-
-        model = Model(input_width, input_height, num_class, 'infer')
+    def infer(self):
+        model = Model(args['input_width'], args['input_height'], args['num_class'], 'infer')
         model.build()
-        self.restore(ckpt_dir=ckpt_dir)
+        self.restore()
         print("start inferring")
-        batch_size = batch_size or args['batch_size']
-        infer_data = infer_data or Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map(args['charmap_path']) \
-            .read(args['dir_infer']) \
-            .init_indices()
-
+        batch_size = args['batch_size']
+        infer_data = Data(args['input_height'], args['input_width'], args['num_class'])
+        infer_data.read(args['dir_infer'])
+        infer_data.init_indices()
         infer_batch = infer_data.next_batch(batch_size)
         self.sess.run(tf.local_variables_initializer())
-
-        buff = []
         while infer_batch is not None:
             infer_images, infer_labels = infer_batch
             infer_feed_dict = model.feed(infer_images, infer_labels)
-            classes = self.sess.run(model.classes,
+            classes = self.sess.run([model.classes],
                                     feed_dict=infer_feed_dict)
-            buff += infer_data.unmap(classes.tolist())
-            infer_batch = infer_data.next_batch(batch_size)
 
-        if not dump:    return buff
-
-        with open(args['infer_output_path'], 'w', encoding='utf-8') as f:
-            for infer, label in zip(buff, infer_data.labels):
-                f.write("%s - %s\n" % (infer, infer_data.unmap(label)))
-        print("infer result dumped to %s" % args['infer_output_path'])
-        return buff
-
-    def restore(self, ckpt_dir=None):
-        self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
-        ckpt_dir = ckpt_dir or args['ckpt']
-        ckpt = tf.train.latest_checkpoint(ckpt_dir)
+    def restore(self):
+        self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=10)
+        ckpt = tf.train.latest_checkpoint(args['ckpt'])
         if ckpt:
             self.saver.restore(self.sess, ckpt)
-            print('successfully restored from %s' % ckpt_dir)
+            print('successfully restored from %s' % args['ckpt'])
         else:
-            print('cannot restore from %s' % ckpt_dir)
+            print('cannot restore from %s' % args['ckpt'])
 
     def save(self, step):
         if self.saver is None:
             self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=10)
-        self.saver.save(self.sess, os.path.join(args['ckpt'], '%s_model' % str(args['name'])), global_step=step)
+        self.saver.save(self.sess, os.path.join(args['ckpt'], 'rotation_model'), global_step=step)
         print('ckpt saved')
 
     def variable_summaries(self, var):
@@ -157,7 +128,6 @@ class Main:
 
             tf.summary.scalar('histogram', var)
 
-
 def main(_):
     print('using tensorflow', tf.__version__)
     m = Main()
@@ -166,11 +136,38 @@ def main(_):
     else:
         dev = '/gpu:%d' % args['gpu']
 
-    with tf.device(dev):
-        m.run(args['mode'])
+    # with tf.device(dev):
+    #     print('---')
+    #     print(dev)
+    #     m.run('train')
+    m.run('train')
 
+def filename2label(filename: str):
+    print(filename)
+    print(filename.split('_')[-1].split('.')[0])
+    return filename.split('_')[-1].split('.')[0]
+
+    raise Exception('filename2label not implement')
+
+def SingleCharData(filename: str):
+    ptn = re.compile("\d+_(\w+)\.(?:jpg|png|jpeg)")
+    # print(ptn)
+    # print(ptn.search(filename))
+    if ptn.search(filename) == None:
+        # print(ptn)
+
+        print(type(" "))
+        return " "
+    else:
+        print(ptn)
+        print(ptn.search(filename).group(1))
+        print(type(ptn.search(filename).group(1)))
+        return ptn.search(filename).group(1)
+    # def filename2label(self, filename: str):
+    #     return SingleCharData.ptn.search(filename).group(1)
 
 if __name__ == '__main__':
-    tf.logging.set_verbosity('INFO')
-    # cmd_args.mode = 'infer'
-    tf.app.run()
+    # tf.logging.set_verbosity('INFO')
+    # tf.app.run()
+    # filename2label(filename="3030_.jpg")
+    SingleCharData(filename="3030_0.jpg")
