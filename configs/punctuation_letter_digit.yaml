@@ -1,4 +1,4 @@
-name: punctuation_digit
+name: punctuation_letter_digit
 
 # `train` or `infer`, will be override by cmd args
 mode: 'train'
@@ -7,24 +7,24 @@ mode: 'train'
 restore: false
 
 # checkpoint directory
-ckpt: ./ckpts/punctuation_digit
+ckpt: ./ckpts/punctuation_letter_digit
 
 # tensorboard log directory
-tb_dir: ./tb/punctuation_digit
+tb_dir: ./tb/punctuation_letter_digit
 
 # charmap path
-charmap_path: label_maps/punctuation_digit.json
+charmap_path: label_maps/punctuation_letter_digit.json
 exists_charmap: false
 
 infer_output_path: ./infer.txt
 
-dir_train: /usr/local/src/data/sc/train_1000_font_resized
-dir_val: /usr/local/src/data/sc/val_50
+dir_train: /usr/local/src/data/pld/train
+dir_val: /usr/local/src/data/pld/val
 dir_infer:
 
 # [optional] size of dataset
-train_size: 3899000
-val_size: 194950
+#train_size: 3899000
+#val_size: 194950
 
 # Which gpu for running. Running on cpu if `-1`
 gpu: 0
@@ -38,7 +38,7 @@ input_height: 64
 batch_size: 128
 
 # number of classes
-num_class: 3899
+num_class: 91
 
 # number of epochs
 num_epochs: 100
