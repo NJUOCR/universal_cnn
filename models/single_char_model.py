@@ -16,6 +16,7 @@ class Model:
         self.step = None
         self.loss = None
         self.classes = None
+        self.prob = None
         self.train_op = None
         self.val_acc = self.val_acc_update_op = None
 
@@ -131,8 +132,8 @@ class Model:
             units=self.num_class
         )
 
-        # probabilities = tf.nn.softmax(logits, name='P')
-        self.classes = tf.argmax(input=logits, axis=1, name='class')
+        self.prob = tf.nn.softmax(logits, name='P')
+        self.classes = tf.argmax(input=self.prob, axis=1, name='class')
         self.step = tf.train.get_or_create_global_step()
 
         self.loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)

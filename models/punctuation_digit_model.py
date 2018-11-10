@@ -2,9 +2,6 @@ import tensorflow as tf
 
 
 class Model:
-    """
-    取消前两个BN
-    """
 
     def __init__(self, input_width, input_height, num_class, mode):
         self.input_width = input_width
@@ -19,6 +16,7 @@ class Model:
         self.step = None
         self.loss = None
         self.classes = None
+        self.prob = None
         self.train_op = None
         self.val_acc = self.val_acc_update_op = None
 
@@ -43,10 +41,10 @@ class Model:
             kernel_initializer=tf.glorot_uniform_initializer()
         )
 
-        # x = tf.layers.batch_normalization(
-        #     inputs=x,
-        #     training=self.training
-        # )
+        x = tf.layers.batch_normalization(
+            inputs=x,
+            training=self.training
+        )
 
         x = tf.nn.leaky_relu(x, alpha=0.01)
 
@@ -61,10 +59,10 @@ class Model:
             kernel_initializer=tf.glorot_uniform_initializer()
         )
 
-        # x = tf.layers.batch_normalization(
-        #     inputs=x,
-        #     training=self.training
-        # )
+        x = tf.layers.batch_normalization(
+            inputs=x,
+            training=self.training
+        )
 
         x = tf.nn.leaky_relu(x, alpha=0.01)
 
@@ -96,36 +94,9 @@ class Model:
             strides=2
         )
 
-        # cnn block 4
-        x = tf.layers.conv2d(
-            inputs=x,
-            filters=256,
-            kernel_size=3,
-            padding='same',
-            kernel_initializer=tf.glorot_uniform_initializer()
-        )
-
-        x = tf.layers.batch_normalization(
-            inputs=x,
-            training=self.training
-        )
-
-        x = tf.nn.leaky_relu(x, alpha=0.01)
-
-        x = tf.layers.max_pooling2d(
-            inputs=x,
-            pool_size=[2, 2],
-            strides=2
-        )
-
         # dense
         x = tf.layers.flatten(
             inputs=x
-        )
-
-        x = tf.layers.dense(
-            inputs=x,
-            units=8192
         )
 
         logits = tf.layers.dense(
@@ -133,8 +104,8 @@ class Model:
             units=self.num_class
         )
 
-        # probabilities = tf.nn.softmax(logits, name='P')
-        self.classes = tf.argmax(input=logits, axis=1, name='class')
+        self.prob = tf.nn.softmax(logits, name='P')
+        self.classes = tf.argmax(input=self.prob, axis=1, name='class')
         self.step = tf.train.get_or_create_global_step()
 
         self.loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
