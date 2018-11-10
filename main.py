@@ -29,10 +29,13 @@ class Main:
         model.build()
         self.sess.run(tf.global_variables_initializer())
 
-        val_data = Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map(args['charmap_path']) \
-            .read(args['dir_val'], size=args['val_size'], make_char_map=True)
-        # .dump_char_map('label_maps/single_char.json')
+        val_data = Data(args['input_height'], args['input_width'], args['num_class'])
+        if args['exist_charmap']:
+            val_data.load_char_map(args['charmap_path'])
+        val_data.read(args['dir_val'], size=args['val_size'], make_char_map=not args['exist_charmap'])
+        if not args['exist_charmap']:
+            val_data.dump_char_map(args['charmap_path'])
+
         train_data = Data(args['input_height'], args['input_width'], args['num_class']) \
             .load_char_map(args['charmap_path']) \
             .read(args['dir_train'], size=args['train_size'], make_char_map=False) \
@@ -159,6 +162,6 @@ def main(_):
 
 
 if __name__ == '__main__':
-    tf.logging.set_verbosity('INFO')
+    tf.logging.set_verbosity('ERROR')
     # cmd_args.mode = 'infer'
     tf.app.run()

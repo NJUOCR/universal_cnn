@@ -1,4 +1,4 @@
-name: single_char
+name: punctuation_digit
 
 # `train` or `infer`, will be override by cmd args
 mode: 'train'
@@ -7,20 +7,20 @@ mode: 'train'
 restore: false
 
 # checkpoint directory
-ckpt: ./ckpts/single_char_1106
+ckpt: ./ckpts/punctuation_digit
 
 # tensorboard log directory
-tb_dir: ./tb/2
+tb_dir: ./tb/punctuation_digit
 
 # charmap path
-charmap_path: label_maps/single_char.json
+charmap_path: label_maps/punctuation_digit.json
 exists_charmap: false
 
 infer_output_path: ./infer.txt
 
 dir_train: /usr/local/src/data/sc/train_1000_font_resized
 dir_val: /usr/local/src/data/sc/val_50
-dir_infer: /usr/local/src/data/sc/hight_error
+dir_infer:
 
 # [optional] size of dataset
 train_size: 3899000
@@ -44,7 +44,7 @@ num_class: 3899
 num_epochs: 100
 
 # save model to checkpoint every these steps
-save_interval: 256
+save_interval: 128
 
 # do validation every these steps
-val_interval: 256
+val_interval: 128
