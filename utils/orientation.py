@@ -38,7 +38,7 @@ def image_dft(image):
     forier_matrix_magnitude = np.log(np.abs(forier_matrix_shift))
     # 二值化
     forier_matrix_magnitude = forier_matrix_magnitude.astype(np.uint8)
-    ret, threshold_matrix = cv.threshold(forier_matrix_magnitude, 13, 255, cv.THRESH_BINARY)   # 11这个阈值 可能需要根据情况变换
+    ret, threshold_matrix = cv.threshold(forier_matrix_magnitude, 14, 255, cv.THRESH_BINARY)   # 11这个阈值 可能需要根据情况变换
     # cv.imshow("wwq", threshold_matrix)
     # 霍夫直线变换
     lines = cv.HoughLinesP(threshold_matrix, 2, np.pi/180, 30, minLineLength=0, maxLineGap=100)
@@ -70,7 +70,7 @@ def calculate_angle(lines, image):
             lenIndex[0], lenIndex[i] = lenIndex[i], lenIndex[0]
     if len(thetaIndex) == 0:
         return angle
-    angle = thetaIndex[current_max]
+    angle = lines_dIndex[current_max]
     lines_direction = lines_dIndex[current_max]
     if angle >= pi2:
         angle = angle - np.pi
@@ -78,14 +78,10 @@ def calculate_angle(lines, image):
         anglet = width * np.tan(angle) / height
         angle = np.arctan(anglet)
     angle = angle * (180 / np.pi)
-    if lines_direction > 0:
-        # angle = angle - 90
-        if angle > 45:
-            angle = angle - 90
-        else:
-            angle = angle
+    if angle < -45:
+        angle = (90 + angle)
     else:
-        angle = 90 - angle
+        angle = angle
     return angle
 
 
