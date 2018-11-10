@@ -4,8 +4,8 @@ import tensorflow as tf
 from args import args
 from data import SingleCharData as Data
 # from data import RotationData as Data
-from models.single_char_model import Model
-
+# from models.single_char_model import Model
+from models.punctuation_letter_digit_model import Model
 
 class Main:
     def __init__(self):
@@ -30,10 +30,10 @@ class Main:
         self.sess.run(tf.global_variables_initializer())
 
         val_data = Data(args['input_height'], args['input_width'], args['num_class'])
-        if args['exist_charmap']:
+        if args['charmap_exist']:
             val_data.load_char_map(args['charmap_path'])
-        val_data.read(args['dir_val'], size=args['val_size'], make_char_map=not args['exist_charmap'])
-        if not args['exist_charmap']:
+        val_data.read(args['dir_val'], size=args['val_size'], make_char_map=not args['charmap_exist'])
+        if not args['charmap_exist']:
             val_data.dump_char_map(args['charmap_path'])
 
         train_data = Data(args['input_height'], args['input_width'], args['num_class']) \

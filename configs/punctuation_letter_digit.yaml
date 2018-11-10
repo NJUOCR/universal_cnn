@@ -4,7 +4,7 @@ name: punctuation_letter_digit
 mode: 'train'
 
 # restore training from latest checkpoint
-restore: false
+restore: true
 
 # checkpoint directory
 ckpt: ./ckpts/punctuation_letter_digit
@@ -14,7 +14,7 @@ tb_dir: ./tb/punctuation_letter_digit
 
 # charmap path
 charmap_path: label_maps/punctuation_letter_digit.json
-exists_charmap: false
+charmap_exist: true
 
 infer_output_path: ./infer.txt
 
@@ -23,8 +23,8 @@ dir_val: /usr/local/src/data/pld/val
 dir_infer:
 
 # [optional] size of dataset
-#train_size: 3899000
-#val_size: 194950
+train_size: -1
+val_size: -1
 
 # Which gpu for running. Running on cpu if `-1`
 gpu: 0
@@ -38,13 +38,13 @@ input_height: 64
 batch_size: 128
 
 # number of classes
-num_class: 91
+num_class: 90
 
 # number of epochs
 num_epochs: 100
 
 # save model to checkpoint every these steps
-save_interval: 128
+save_interval: 256
 
 # do validation every these steps
-val_interval: 128
+val_interval: 64
