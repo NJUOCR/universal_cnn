@@ -63,6 +63,8 @@ def calculate_angle(lines, image):
             lenIndex.append((x2-x1)**2 + (y2-y1)**2)
             thetaIndex.append(lines_direction)
             # lineIndex.append(line)
+    if len(thetaIndex) == 0:
+        return 0.0
     thetaIndex = np.sort(thetaIndex)
     angle = thetaIndex[int(len(thetaIndex)/2)]
     lines_direction = np.tan(angle)
