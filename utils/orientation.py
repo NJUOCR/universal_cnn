@@ -41,7 +41,7 @@ def image_dft(image):
     ret, threshold_matrix = cv.threshold(forier_matrix_magnitude, 14, 255, cv.THRESH_BINARY)   # 11这个阈值 可能需要根据情况变换
     # cv.imshow("wwq", threshold_matrix)
     # 霍夫直线变换
-    lines = cv.HoughLinesP(threshold_matrix, 2, np.pi/180, 30, minLineLength=0, maxLineGap=100)
+    lines = cv.HoughLinesP(threshold_matrix, 2, np.pi/180, 80, minLineLength=0, maxLineGap=100)
     return lines
 
 
@@ -52,36 +52,31 @@ def calculate_angle(lines, image):
     pi2 = np.pi/2
     lenIndex = []
     thetaIndex = []
-    lines_dIndex = []
+    # lineIndex = []
     for line in lines:
         x1, y1, x2, y2 = line[0]
         theta = abs(np.arctan2(y2 - y1, x2 - x1))   # 如果不是绝对值  有可能angle是负的  即 p2 比 p1 小
         lines_direction = np.arctan2(y2 - y1, x2 - x1)
-        if abs(theta) < piThresh or abs(theta - pi2) < piThresh:
+        if abs(theta) < piThresh * 5.5 or abs(theta - pi2) < piThresh:
             continue
         else:
             lenIndex.append((x2-x1)**2 + (y2-y1)**2)
-            thetaIndex.append(theta)
-            lines_dIndex.append(lines_direction)
-    current_max = 0
-    for i in range(len(lenIndex)):
-        if lenIndex[0] < lenIndex[i]:
-            current_max = i
-            lenIndex[0], lenIndex[i] = lenIndex[i], lenIndex[0]
-    if len(thetaIndex) == 0:
-        return angle
-    angle = lines_dIndex[current_max]
-    lines_direction = lines_dIndex[current_max]
+            thetaIndex.append(lines_direction)
+            # lineIndex.append(line)
+    thetaIndex = np.sort(thetaIndex)
+    angle = thetaIndex[int(len(thetaIndex)/2)]
+    lines_direction = np.tan(angle)
     if angle >= pi2:
         angle = angle - np.pi
     if angle != pi2:
-        anglet = width * np.tan(angle) / height
+        anglet = height * np.tan(angle) / width
         angle = np.arctan(anglet)
     angle = angle * (180 / np.pi)
-    if angle < -45:
-        angle = (90 + angle)
+    angle = abs(angle)
+    if lines_direction > 0:
+        angle = angle - 90
     else:
-        angle = angle
+        angle = 90 - angle
     return angle
 
 
