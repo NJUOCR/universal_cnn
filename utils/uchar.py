@@ -65,7 +65,7 @@ def to_size(img, height, width):
     uimg.save("out_img4.jpg", out_img)
     return out_img
 
-
+# width就是像素比例，如果是64*64，这里width就输入64
 def contains_text(img, width):
     h, w = img.shape[:2]
 
