@@ -3,6 +3,8 @@ import utils.projection as proj
 import utils.uimg as uimg
 from data import SingleCharData
 from main import Main
+from utils.uchar import contains_text
+from utils.orientation import fix_orientation
 
 
 def preprocess(page_img, draw=False):
@@ -19,7 +21,7 @@ def preprocess(page_img, draw=False):
     bin_img = uimg.auto_bin(page_img)
 
     # 2.
-    ori_img = bin_img
+    ori_img = fix_orientation(bin_img)
 
     # 3.
     horizontal_smooth = min(15, (ori_img.shape[0] * ori_img.shape[1]) // 100000), 9
@@ -43,10 +45,11 @@ def preprocess(page_img, draw=False):
 
             # 5.
             resized_char_img = uimg.fit_resize(char_img, 64, 64)
-            if resized_char_img is None:
-                continue
-            chars.append(resized_char_img)
-            lines.append(line_id)
+            if contains_text(resized_char_img):
+                if resized_char_img is None:
+                    continue
+                chars.append(resized_char_img)
+                lines.append(line_id)
     return chars, lines, ori_img
 
 

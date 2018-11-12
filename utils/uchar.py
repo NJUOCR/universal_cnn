@@ -65,8 +65,8 @@ def to_size(img, height, width):
     uimg.save("out_img4.jpg", out_img)
     return out_img
 
-
-def contains_text(img):
+# width就是像素比例，如果是64*64，这里width就输入64
+def contains_text(img, width):
     h, w = img.shape[:2]
 
     def is_foreground(_y, _x):
@@ -82,7 +82,7 @@ def contains_text(img):
             if (y, x) in visited:
                 continue
             elif not is_foreground(y, x):
-                visited[y,x] = True
+                visited[y, x] = True
             else:
                 # not visited and is foreground (text)
                 cnt = 0
@@ -92,7 +92,7 @@ def contains_text(img):
                     cnt += 1
                     cur_y, cur_x = q.get()
                     visited[cur_y, cur_x] = True
-                    nbrs = [(cur_y-1, cur_x), (cur_y+1, cur_x), (cur_y, cur_x-1), (cur_y, cur_x+1)]
+                    nbrs = [(cur_y - 1, cur_x), (cur_y + 1, cur_x), (cur_y, cur_x - 1), (cur_y, cur_x + 1)]
                     for nbr_y, nbr_x in nbrs:
                         if (nbr_y, nbr_x) in visited:
                             continue
@@ -102,22 +102,76 @@ def contains_text(img):
                         if is_in(nbr_y, nbr_x) and is_foreground(nbr_y, nbr_x):
                             q.put((nbr_y, nbr_x))
                 components.append(cnt)
-
+    try:
+        min_num = int((width * width) * 36 / (64 * 64))
+    except ValueError:
+        print("ValueError while computing the min_num of text")
     # todo 根据`components`判断该图片是否包含文字，返回值改为True|False
-    return components
+    return max_num(components) > min_num
+
+
+def max_num(array):
+    max = 0
+    for num in array:
+        if num > max:
+            max = num
+    return max
+
+
+# ascending == 1,ascending;ascending == -1,descending
+def top_ten(array, ascending):
+    top = []
+    for i in array:
+        sign = 0
+        if ascending == 1:
+            for j in top:
+                if j > i:
+                    sign = 1
+                    top.insert(top.index(j), i)
+                    break
+        elif ascending == -1:
+            for j in top:
+                if j < i:
+                    sign = 1
+                    top.insert(top.index(j), i)
+                    break
+        if sign == 0:
+            top.append(i)
+        if len(top) == 11:
+            top.pop()
+    return top
 
 
 if __name__ == '__main__':
     # _img = uimg.read('/home/stone/PycharmProjects/universal_cnn/4.jpg')
     # # get_bounds(img)
     # to_size(_img, 64, 64)
+
+    maxLinked = []
     import os
+
     print(os.getcwd())
-    for filename in os.listdir('char_split_output/822_1169'):
-        im = uimg.read(os.path.join('char_split_output/822_1169', filename))
+    count = 0
+    count1 = 0
+    # for filename in os.listdir('char_split_output/822_1169'):
+    #     im = uimg.read(os.path.join('char_split_output/822_1169', filename))
+    for filename in os.listdir('J:/labels/labels/positive'):
+        im = uimg.read(os.path.join('J:/labels/labels/positive', filename))
         _, im = cv.threshold(im, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
-        coms = contains_text(im)
-        print(coms)
-        cv.imshow('', im)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+        coms = contains_text(im, 64)
+        count = count + 1
+        if coms:
+            count1 = count1 + 1
+    print(count1 / count)
+
+    count = 0
+    count1 = 0
+    maxLinked2 = []
+    for filename in os.listdir('J:/labels/labels/negative'):
+        im = uimg.read(os.path.join('J:/labels/labels/negative', filename))
+        _, im = cv.threshold(im, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        coms = contains_text(im,64)
+        count = count + 1
+        if coms:
+            count1 = count1 + 1
+    print(count1 / count)

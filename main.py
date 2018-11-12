@@ -4,8 +4,8 @@ import tensorflow as tf
 from args import args
 from data import SingleCharData as Data
 # from data import RotationData as Data
-from models.single_char_model2 import Model
-
+# from models.single_char_model import Model
+from models.punctuation_letter_digit_model import Model
 
 class Main:
     def __init__(self):
@@ -29,10 +29,13 @@ class Main:
         model.build()
         self.sess.run(tf.global_variables_initializer())
 
-        val_data = Data(args['input_height'], args['input_width'], args['num_class']) \
-            .load_char_map(args['charmap_path']) \
-            .read(args['dir_val'], size=args['val_size'], make_char_map=True)
-        # .dump_char_map('label_maps/single_char.json')
+        val_data = Data(args['input_height'], args['input_width'], args['num_class'])
+        if args['charmap_exist']:
+            val_data.load_char_map(args['charmap_path'])
+        val_data.read(args['dir_val'], size=args['val_size'], make_char_map=not args['charmap_exist'])
+        if not args['charmap_exist']:
+            val_data.dump_char_map(args['charmap_path'])
+
         train_data = Data(args['input_height'], args['input_width'], args['num_class']) \
             .load_char_map(args['charmap_path']) \
             .read(args['dir_train'], size=args['train_size'], make_char_map=True) \
@@ -92,7 +95,8 @@ class Main:
                     cost_between_val = samples_between_val = 0
         self.save(step)
 
-    def infer(self, infer_data=None, input_width=None, input_height=None, num_class=None, batch_size=None, ckpt_dir=None, dump=False):
+    def infer(self, infer_data=None, input_width=None, input_height=None,
+              num_class=None, batch_size=None, ckpt_dir=None, dump=False):
         input_width = input_width or args['input_width']
         input_height = input_height or args['input_height']
         num_class = num_class or args['num_class']
@@ -114,12 +118,13 @@ class Main:
         while infer_batch is not None:
             infer_images, infer_labels = infer_batch
             infer_feed_dict = model.feed(infer_images, infer_labels)
-            classes = self.sess.run(model.classes,
-                                    feed_dict=infer_feed_dict)
-            buff += infer_data.unmap(classes.tolist())
+            classes, p = self.sess.run([model.classes, model.prob],
+                                       feed_dict=infer_feed_dict)
+            buff += [(pred, prob) for pred, prob in zip(infer_data.unmap(), p)]
             infer_batch = infer_data.next_batch(batch_size)
 
-        if not dump:    return buff
+        if not dump:
+            return buff
 
         with open(args['infer_output_path'], 'w', encoding='utf-8') as f:
             for infer, label in zip(buff, infer_data.labels):
@@ -143,20 +148,6 @@ class Main:
         self.saver.save(self.sess, os.path.join(args['ckpt'], '%s_model' % str(args['name'])), global_step=step)
         print('ckpt saved')
 
-    def variable_summaries(self, var):
-        with tf.name_scope('summaries'):
-            mean = tf.reduce_mean(var)
-            tf.summary.scalar('mean', mean)
-
-            # 计算参数的标准差
-            with tf.name_scope('stddev'):
-                stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
-            tf.summary.scalar('stddev', stddev)
-            tf.summary.scalar('max', tf.reduce_max(var))
-            tf.summary.scalar('min', tf.reduce_min(var))
-
-            tf.summary.scalar('histogram', var)
-
 
 def main(_):
     print('using tensorflow', tf.__version__)
@@ -171,6 +162,6 @@ def main(_):
 
 
 if __name__ == '__main__':
-    tf.logging.set_verbosity('INFO')
+    tf.logging.set_verbosity('ERROR')
     # cmd_args.mode = 'infer'
     tf.app.run()

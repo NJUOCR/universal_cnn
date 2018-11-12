@@ -26,7 +26,6 @@ class Model:
             self.labels: labels
         }
 
-# Todo
     def build(self):
         images = self.images
         labels = self.labels
@@ -95,36 +94,9 @@ class Model:
             strides=2
         )
 
-        # cnn block 4
-        x = tf.layers.conv2d(
-            inputs=x,
-            filters=256,
-            kernel_size=3,
-            padding='same',
-            kernel_initializer=tf.glorot_uniform_initializer()
-        )
-
-        x = tf.layers.batch_normalization(
-            inputs=x,
-            training=self.training
-        )
-
-        x = tf.nn.leaky_relu(x, alpha=0.01)
-
-        x = tf.layers.max_pooling2d(
-            inputs=x,
-            pool_size=[2, 2],
-            strides=2
-        )
-
         # dense
         x = tf.layers.flatten(
             inputs=x
-        )
-
-        x = tf.layers.dense(
-            inputs=x,
-            units=8192
         )
 
         logits = tf.layers.dense(
