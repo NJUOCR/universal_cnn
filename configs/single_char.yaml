@@ -14,7 +14,7 @@ tb_dir: ./tb/single_char_prob
 
 # charmap path
 charmap_path: ./label_maps/single_pld_1113.json
-charmap_exist: true
+charmap_exist: false
 
 infer_output_path: ./infer.txt
 
