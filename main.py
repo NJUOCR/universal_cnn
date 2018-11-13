@@ -1,11 +1,14 @@
 import os
 
 import tensorflow as tf
+
 from args import args
 from data import SingleCharData as Data
 # from data import RotationData as Data
-# from models.single_char_model import Model
-from models.punctuation_letter_digit_model import Model
+from models.single_char_model import Model
+
+
+# from models.punctuation_letter_digit_model import Model
 
 class Main:
     def __init__(self):
@@ -118,14 +121,16 @@ class Main:
         while infer_batch is not None:
             infer_images, infer_labels = infer_batch
             infer_feed_dict = model.feed(infer_images, infer_labels)
-            classes, p = self.sess.run([model.classes, model.prob],
-                                       feed_dict=infer_feed_dict)
-            buff += [(pred, prob) for pred, prob in zip(infer_data.unmap(), p)]
+            classes, p, logits = self.sess.run([model.classes, model.prob, model.logits],
+                                               feed_dict=infer_feed_dict)
+            buff += [(pred, max(logit)) for pred, logit in zip(infer_data.unmap(classes.tolist()), logits)]
+            # buff += [(pred, prob) for pred, prob in zip(infer_data.unmap(classes.tolist()), p)]
             infer_batch = infer_data.next_batch(batch_size)
 
         if not dump:
             return buff
 
+        # 如果预测我们生成的数据（附带了标签），可以对比结果
         with open(args['infer_output_path'], 'w', encoding='utf-8') as f:
             for infer, label in zip(buff, infer_data.labels):
                 f.write("%s - %s\n" % (infer, infer_data.unmap(label)))

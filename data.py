@@ -75,8 +75,10 @@ class AbstractData:
                         .reshape((self.height, self.width, 1)) / 255.
                     )
                     bar.update(bar.value + 1)
+        print('transforming to numpy array...', end=' ')
         self.images = np.array(images)
         self.labels = np.array(labels)
+        print('[done]')
         del images
         del labels
         gc.collect()
@@ -87,9 +89,11 @@ class AbstractData:
         raise Exception('filename2label not implement')
 
     def shuffle_indices(self):
+        print('shuffling...', end=' ')
         samples = self.size()
         self.indices = np.random.permutation(samples)
         self.batch_ptr = 0
+        print('[done]')
         return self
 
     def init_indices(self):
