@@ -1,8 +1,8 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import cv2 as cv
+import matplotlib.pyplot as plt
+import numpy as np
 
-# 计算横向或者竖向每列非白像素的个数，image:传入的图像; direction：0->列，1->行
+
 def calculate_pixel(image, axis):
     """
     Calculate the sum of **black** pixel
@@ -20,6 +20,7 @@ def calculate_pixel(image, axis):
 
     return pixel_sum
 
+
 def project(img, direction='vertical', smooth=None):
     """
     Do projection.
@@ -33,7 +34,7 @@ def project(img, direction='vertical', smooth=None):
     sum_array = calculate_pixel(img, 1 if direction == 'horizontal' else 0)
     if smooth is not None:
         window_size, times = smooth
-        kernel = np.ones((window_size,))/window_size
+        kernel = np.ones((window_size,)) / window_size
         for _ in range(times):
             sum_array = np.convolve(sum_array, kernel, mode='same')
         # sum_array = sum_array // 1
@@ -90,15 +91,15 @@ def draw_projective_histogram(img, direction='both', histogram_height=100, histo
 
 def get_splitter_horizontal(sum_array):
     splitters = []
-    for i in range(1, len(sum_array)-21):
-        left, cur, right = sum_array[i-1:i+2]
+    for i in range(1, len(sum_array) - 21):
+        left, cur, right = sum_array[i - 1:i + 2]
         cur_index = i
         if cur == left == right:
             continue
         if cur <= min(left, right):
-            for j in range(i, i+20):
+            for j in range(i, i + 20):
                 if (abs(sum_array[j] - cur)) >= 1:
-                    cur_index = j-1
+                    cur_index = j - 1
                     break
             # if cur + 1.5 > left:
             #     cur_index = i - 1
@@ -107,15 +108,26 @@ def get_splitter_horizontal(sum_array):
             splitters.append(cur_index)
     return splitters
 
+
 def get_splitter(sum_array):
     splitters = []
-    for i in range(1, len(sum_array)-1):
-        left, cur, right = sum_array[i-1:i+2]
+    for i in range(1, len(sum_array) - 1):
+        left, cur, right = sum_array[i - 1:i + 2]
         if cur == left == right:
             continue
         if cur <= min(left, right):
             splitters.append(i)
     return splitters
+
+
+def get_splitter_zero(sum_array):
+    splitters = []
+    for i in range(1, len(sum_array) - 3):
+        left, cur, right, right1, right2 = sum_array[i - 1:i + 4]
+        if left > 0 and cur == 0 and right == right1 == 0:
+            splitters.append(i)
+    return splitters
+
 
 # 画直方图
 def draw_images(sum_array):
@@ -124,7 +136,7 @@ def draw_images(sum_array):
     plt.show()
 
 
-def extract_peek_array(array_vals, minimun_val = 20, minimum_range= 2 ):
+def extract_peek_array(array_vals, minimun_val=20, minimum_range=2):
     start_i = None
     end_i = None
     peek_ranges = []
@@ -146,6 +158,7 @@ def extract_peek_array(array_vals, minimun_val = 20, minimum_range= 2 ):
     print(peek_ranges)
     return peek_ranges
 
+
 def draw_line(sum_array, img):
     peek_ranges = extract_peek_array(sum_array)
     line_seg = np.copy(img)
@@ -160,260 +173,3 @@ def draw_line(sum_array, img):
     return line_seg
     # cv.imshow('line image', line_seg)
     # cv.waitKey(0)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

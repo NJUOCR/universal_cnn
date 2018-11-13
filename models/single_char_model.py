@@ -15,6 +15,7 @@ class Model:
         # define op
         self.step = None
         self.loss = None
+        self.logits = None
         self.classes = None
         self.prob = None
         self.train_op = None
@@ -127,16 +128,16 @@ class Model:
             units=8192
         )
 
-        logits = tf.layers.dense(
+        self.logits = tf.layers.dense(
             inputs=x,
             units=self.num_class
         )
 
-        self.prob = tf.nn.softmax(logits, name='P')
+        self.prob = tf.nn.softmax(self.logits, name='P')
         self.classes = tf.argmax(input=self.prob, axis=1, name='class')
         self.step = tf.train.get_or_create_global_step()
 
-        self.loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+        self.loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=self.logits)
         optimizer = tf.train.AdamOptimizer()
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 

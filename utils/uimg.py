@@ -32,14 +32,18 @@ def reverse(img):
     return img
 
 
-def auto_bin(img):
+def auto_bin(img, otsu=False):
     """
     # todo ylx:自适应二值化
+    :param otsu: use OTSU instead of Adaptive
     :param img:
     :return:
     """
     # 读取图像，并转为灰度图
     img_grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+    if otsu:
+        return cv.threshold(img_grey, 0, 255, cv.THRESH_BINARY+cv.THRESH_OTSU)[1]
     # 自适应二值化
     img_at_mean = cv.adaptiveThreshold(img_grey, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 47, 10)
 
@@ -82,7 +86,17 @@ def replace_color(img, bgr, old_val_bound, new_val):
 
 
 def fit_resize(img, new_height, new_width):
+    """
+    ***ALERT `fit_resize` may return `None` value***, this is because sometimes an image can be fit_resize
+    into another size( the calculated new height or width can be 0)
+    :param img:
+    :param new_height:
+    :param new_width:
+    :return:
+    """
     height, width = img.shape[:2]
+    if height == 0 or width == 0:
+        return None
     h_rate = height / new_height
     w_rate = width / new_width
     rate = max(h_rate, w_rate)

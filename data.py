@@ -33,7 +33,7 @@ class AbstractData:
     def dump_char_map(self, file_path):
         print('Generating char map to `%s` ...\t' % file_path, end='')
         with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(self.label_map, f, ensure_ascii=False)
+            json.dump(self.label_map, f, ensure_ascii=False, indent=2)
         print('[done]')
         return self
 
@@ -49,7 +49,7 @@ class AbstractData:
             self.images[i] = img.reshape(self.height, self.width, 1).astype(float) / 255
         return self
 
-    def read(self, src_root, size=None, make_char_map=False):
+    def read(self, src_root, size=-1, make_char_map=False):
         """
 
         :param src_root: the root directory containing all the data to be read
@@ -57,11 +57,11 @@ class AbstractData:
         :param make_char_map: whether to make a new charmap
         :return:
         """
-        print('loading data...%s from %s ' % ('' if size is None else ("[%d]" % size), src_root))
+        print('loading data...%s from %s ' % ('' if size == -1 else ("[%d]" % size), src_root))
         images = []
         labels = []
-        with ProgressBar(max_value=size) as bar:
-            for parent_dir, _, filenames in os.walk(src_root):
+        with ProgressBar(max_value=None if size == -1 else size) as bar:
+            for parent_dir, _, filenames in os.walk(src_root, followlinks=True):
                 for filename in filenames:
                     lbl = self.filename2label(filename)
                     if make_char_map and lbl not in self.label_map:
@@ -75,8 +75,10 @@ class AbstractData:
                         .reshape((self.height, self.width, 1)) / 255.
                     )
                     bar.update(bar.value + 1)
+        print('transforming to numpy array...', end=' ')
         self.images = np.array(images)
         self.labels = np.array(labels)
+        print('[done]')
         del images
         del labels
         gc.collect()
@@ -87,9 +89,11 @@ class AbstractData:
         raise Exception('filename2label not implement')
 
     def shuffle_indices(self):
+        print('shuffling...', end=' ')
         samples = self.size()
         self.indices = np.random.permutation(samples)
         self.batch_ptr = 0
+        print('[done]')
         return self
 
     def init_indices(self):

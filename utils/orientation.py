@@ -10,7 +10,7 @@ def fix_orientation(img):
     :return: the output image, in which the text is horizontally oriented.
     """
     # todo 文字倾斜校正
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    gray = img if len(img.shape) == 2 else cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     binary_matrix = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 47, 10)
     padded_matrix = image_padded(binary_matrix)
     hough_lines = image_dft(padded_matrix)
@@ -38,57 +38,54 @@ def image_dft(image):
     forier_matrix_magnitude = np.log(np.abs(forier_matrix_shift))
     # 二值化
     forier_matrix_magnitude = forier_matrix_magnitude.astype(np.uint8)
-    ret, threshold_matrix = cv.threshold(forier_matrix_magnitude, 14, 255, cv.THRESH_BINARY)   # 11这个阈值 可能需要根据情况变换
+    ret, threshold_matrix = cv.threshold(forier_matrix_magnitude, 14, 255, cv.THRESH_BINARY)  # 11这个阈值 可能需要根据情况变换
     # cv.imshow("wwq", threshold_matrix)
     # 霍夫直线变换
-    lines = cv.HoughLinesP(threshold_matrix, 2, np.pi/180, 30, minLineLength=0, maxLineGap=100)
+    lines = cv.HoughLinesP(threshold_matrix, 2, np.pi / 180, 80, minLineLength=0, maxLineGap=100)
     return lines
 
 
 def calculate_angle(lines, image):
     height, width = image.shape[:2]
     angle = 0.0
-    piThresh = np.pi/90
-    pi2 = np.pi/2
+    piThresh = np.pi / 90
+    pi2 = np.pi / 2
     lenIndex = []
     thetaIndex = []
-    lines_dIndex = []
+    # lineIndex = []
     for line in lines:
         x1, y1, x2, y2 = line[0]
-        theta = abs(np.arctan2(y2 - y1, x2 - x1))   # 如果不是绝对值  有可能angle是负的  即 p2 比 p1 小
+        theta = abs(np.arctan2(y2 - y1, x2 - x1))  # 如果不是绝对值  有可能angle是负的  即 p2 比 p1 小
         lines_direction = np.arctan2(y2 - y1, x2 - x1)
-        if abs(theta) < piThresh or abs(theta - pi2) < piThresh:
+        if abs(theta) < piThresh * 5.5 or abs(theta - pi2) < piThresh:
             continue
         else:
-            lenIndex.append((x2-x1)**2 + (y2-y1)**2)
-            thetaIndex.append(theta)
-            lines_dIndex.append(lines_direction)
-    current_max = 0
-    for i in range(len(lenIndex)):
-        if lenIndex[0] < lenIndex[i]:
-            current_max = i
-            lenIndex[0], lenIndex[i] = lenIndex[i], lenIndex[0]
+            lenIndex.append((x2 - x1) ** 2 + (y2 - y1) ** 2)
+            thetaIndex.append(lines_direction)
+            # lineIndex.append(line)
     if len(thetaIndex) == 0:
-        return angle
-    angle = lines_dIndex[current_max]
-    lines_direction = lines_dIndex[current_max]
+        return 0.0
+    thetaIndex = np.sort(thetaIndex)
+    angle = thetaIndex[int(len(thetaIndex) / 2)]
+    lines_direction = np.tan(angle)
     if angle >= pi2:
         angle = angle - np.pi
     if angle != pi2:
-        anglet = width * np.tan(angle) / height
+        anglet = height * np.tan(angle) / width
         angle = np.arctan(anglet)
     angle = angle * (180 / np.pi)
-    if angle < -45:
-        angle = (90 + angle)
+    angle = abs(angle)
+    if lines_direction > 0:
+        angle = angle - 90
     else:
-        angle = angle
+        angle = 90 - angle
     return angle
 
 
 def image_rotated(angle, image):
     height, width = image.shape[:2]
     img_matrix = np.array(image)
-    center = (width//2, height//2)
+    center = (width // 2, height // 2)
     temp_matrix = cv.getRotationMatrix2D(center, angle, 1.0)
     rotated_matrix = cv.warpAffine(img_matrix, temp_matrix, (width, height), flags=cv.INTER_CUBIC,
                                    borderMode=cv.BORDER_REPLICATE)
@@ -108,4 +105,3 @@ if __name__ == '__main__':
     cv.imshow("ss", rr)
     cv.waitKey(0)
     cv.destroyAllWindows()
-
