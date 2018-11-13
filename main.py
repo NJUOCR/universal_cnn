@@ -41,7 +41,7 @@ class Main:
 
         train_data = Data(args['input_height'], args['input_width'], args['num_class']) \
             .load_char_map(args['charmap_path']) \
-            .read(args['dir_train'], size=args['train_size'], make_char_map=True) \
+            .read(args['dir_train'], size=args['train_size'], make_char_map=False) \
             .shuffle_indices()
         print('start training')
 
