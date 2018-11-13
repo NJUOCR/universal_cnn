@@ -7,10 +7,10 @@ mode: 'train'
 restore: false
 
 # checkpoint directory
-ckpt: ./ckpts/single_char_prob
+ckpt: ./ckpts/single_pld_prob
 
 # tensorboard log directory
-tb_dir: ./tb/single_char_prob
+tb_dir: ./tb/single_pld_prob
 
 # charmap path
 charmap_path: ./label_maps/single_pld_1113.json
