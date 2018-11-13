@@ -13,18 +13,18 @@ ckpt: ./ckpts/single_char_prob
 tb_dir: ./tb/single_char_prob
 
 # charmap path
-charmap_path: label_maps/single_char_1107.json
+charmap_path: label_maps/single_pld_1113.json
 charmap_exist: true
 
 infer_output_path: ./infer.txt
 
-dir_train: /usr/local/src/data/sc/train_1000_1106
-dir_val: /usr/local/src/data/sc/val_50_1106
+dir_train: /usr/local/src/data/sc_pld/train
+dir_val: /usr/local/src/data/sc_pld/val
 dir_infer: /usr/local/src/data/sc/hight_error
 
 # [optional] size of dataset
-train_size: 3900000
-val_size: 195000
+train_size: 3959000
+val_size: 84041
 
 # Which gpu for running. Running on cpu if `-1`
 gpu: 0
@@ -38,7 +38,7 @@ input_height: 64
 batch_size: 128
 
 # number of classes
-num_class: 3900
+num_class: 3990
 
 # number of epochs
 num_epochs: 100

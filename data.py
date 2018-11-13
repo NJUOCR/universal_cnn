@@ -113,10 +113,11 @@ class AbstractData:
             return self.images[indices], self.labels[indices]
 
     def unmap(self, src):
-        if isinstance(src, list):
-            return list(map(lambda el: self.label_map_reverse[el], src))
-        else:
-            return self.label_map_reverse[src]
+        # if isinstance(src, list):
+        #     return list(map(lambda el: self.label_map_reverse[el], src))
+        # else:
+        #     return self.label_map_reverse[src]
+        return list(map(lambda el: self.label_map_reverse[el], src))
 
     def get(self):
         return self.images, self.labels
