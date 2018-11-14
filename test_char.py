@@ -33,6 +33,7 @@ if __name__ == '__main__':
             }
         char_map[label]['total'] += 1
         char_map[label]['bingo'] += (1 if result == label else 0)
+        print(result, label)
 
     acc = {}
     for char, obj in char_map.items():
