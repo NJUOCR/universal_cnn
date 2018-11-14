@@ -26,6 +26,7 @@ if __name__ == '__main__':
     for result, label in zip(results, labels):
         # for result, label, img in zip(results, labels, data.images):
         #     show(img.reshape(img.shape[:2]))
+        result = result[0]
         if label not in char_map:
             char_map[label] = {
                 'total': 0,
