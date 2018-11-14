@@ -23,7 +23,7 @@ dir_val: /usr/local/src/data/sc_pld/val
 dir_infer: /usr/local/src/data/sc/hight_error
 
 # [optional] size of dataset
-train_size: 3959000
+train_size: 4052000
 val_size: 84041
 
 # Which gpu for running. Running on cpu if `-1`
