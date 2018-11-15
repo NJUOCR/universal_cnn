@@ -7,13 +7,13 @@ mode: 'train'
 restore: false
 
 # checkpoint directory
-ckpt: ./ckpts/single_pld_prob
+ckpt: ./ckpts/single_pld_3990_ldchange
 
 # tensorboard log directory
-tb_dir: ./tb/single_pld_prob
+tb_dir: ./tb/single_pld_prob_ldchange
 
 # charmap path
-charmap_path: ./label_maps/single_pld_1113.json
+charmap_path: ./label_maps/single_pld_3990_ldchange.json
 charmap_exist: false
 
 infer_output_path: ./infer.txt
@@ -23,7 +23,7 @@ dir_val: /usr/local/src/data/sc_pld/val
 dir_infer: /usr/local/src/data/sc/hight_error
 
 # [optional] size of dataset
-train_size: 3959000
+train_size: 4052000
 val_size: 84041
 
 # Which gpu for running. Running on cpu if `-1`
