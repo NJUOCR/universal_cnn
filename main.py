@@ -6,9 +6,8 @@ from args import args
 from data import SingleCharData as Data
 # from data import RotationData as Data
 from models.single_char_model import Model
-
-
 # from models.punctuation_letter_digit_model import Model
+
 
 class Main:
     def __init__(self):
@@ -24,7 +23,7 @@ class Main:
         elif mode in ('infer', 'pred'):
             self.infer(dump=True)
         else:
-            print('%s ??' % mode)
+            print('mode `%s` cannot be recognized' % mode)
 
     def train(self):
 
@@ -109,7 +108,7 @@ class Main:
         self.restore(ckpt_dir=ckpt_dir)
         print("start inferring")
         batch_size = batch_size or args['batch_size']
-        infer_data = infer_data or Data(args['input_height'], args['input_width'], args['num_class']) \
+        infer_data = infer_data or Data(args['input_height'], args['input_width']) \
             .load_char_map(args['charmap_path']) \
             .read(args['dir_infer']) \
             .init_indices()
@@ -123,8 +122,8 @@ class Main:
             infer_feed_dict = model.feed(infer_images, infer_labels)
             classes, p, logits = self.sess.run([model.classes, model.prob, model.logits],
                                                feed_dict=infer_feed_dict)
-            buff += [(pred, max(logit)) for pred, logit in zip(infer_data.unmap(classes.tolist()), logits)]
-            # buff += [(pred, prob) for pred, prob in zip(infer_data.unmap(classes.tolist()), p)]
+            # buff += [(pred, max(logit)) for pred, logit in zip(infer_data.unmap(classes.tolist()), logits)]
+            buff += [(pred, max(prob)) for pred, prob in zip(infer_data.unmap(classes.tolist()), p)]
             infer_batch = infer_data.next_batch(batch_size)
 
         if not dump:

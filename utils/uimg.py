@@ -34,13 +34,12 @@ def reverse(img):
 
 def auto_bin(img, otsu=False):
     """
-    # todo ylx:自适应二值化
     :param otsu: use OTSU instead of Adaptive
     :param img:
     :return:
     """
     # 读取图像，并转为灰度图
-    img_grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    img_grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY) if len(img.shape) == 3 and img.shape[2] == 3 else img
 
     if otsu:
         return cv.threshold(img_grey, 0, 255, cv.THRESH_BINARY+cv.THRESH_OTSU)[1]
@@ -58,13 +57,6 @@ def erode_img(img, kernal_heght, kernal_width):
 
 
 def replace_color(img, bgr, old_val_bound, new_val):
-    """
-    # todo ylx:替换颜色
-    :param img:
-    :param old_color:
-    :param new_color:
-    :return:
-    """
     height, width = img.shape[:2]
     # 转换HSV
     # hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
@@ -87,7 +79,7 @@ def replace_color(img, bgr, old_val_bound, new_val):
 
 def fit_resize(img, new_height, new_width):
     """
-    ***ALERT `fit_resize` may return `None` value***, this is because sometimes an image can be fit_resize
+    > ***ALERT `fit_resize` may return `None` value***, this is because sometimes an image can be fit_resize
     into another size( the calculated new height or width can be 0)
     :param img:
     :param new_height:
@@ -102,7 +94,7 @@ def fit_resize(img, new_height, new_width):
     rate = max(h_rate, w_rate)
     dsize = int(width/rate), int(height/rate)
     try:
-        resized_img = cv.resize(img, dsize)
+        resized_img = auto_bin(cv.resize(img, dsize), otsu=True) if rate >= 1 else img
         return pad_to(resized_img, new_height, new_width, 255)
     except cv.error:
         return None

@@ -24,9 +24,11 @@ def preprocess(page_img, draw=False):
     ori_img = fix_orientation(bin_img)
 
     # 3.
-    horizontal_smooth = min(15, (ori_img.shape[0] * ori_img.shape[1]) // 100000), 9
+    horizontal_smooth = (0, 0)
+    # horizontal_smooth = min(15, (ori_img.shape[0] * ori_img.shape[1]) // 100000), 9
     horizontal_sum_array = proj.project(ori_img, direction='horizontal', smooth=horizontal_smooth)
-    line_splitters = proj.get_splitter_horizontal(horizontal_sum_array)
+    line_splitters = proj.get_splitter_zero(horizontal_sum_array)
+    # line_splitters = proj.get_splitter_horizontal(horizontal_sum_array)
     if draw:
         ori_img[line_splitters, :] = 180
     # 4.
@@ -60,18 +62,23 @@ if __name__ == '__main__':
     _chars, _lines, _tiles_img = preprocess(uimg.read(page_img_path, 1), draw=True)
 
     main = Main()
-    data = SingleCharData(64, 64, 3900).load_char_map("label_maps/single_char_1107.json").set_images(_chars).init_indices()
+    data = SingleCharData(64, 64)\
+        .load_char_map("label_maps/single_pld_3990.json")\
+        .load_alias_map("label_maps/aliasmap.json")\
+        .set_images(_chars)\
+        .init_indices()
     results = main.infer(infer_data=data, input_width=64, input_height=64,
-                         num_class=3900, ckpt_dir='./ckpts/single_char_prob')
+                         num_class=3990, ckpt_dir='./ckpts/single_pld_3990')
     cur_line = -1
 
-    uimg.save('/usr/local/src/data/results/pre_result.jpg', _tiles_img)
-    f = open('/usr/local/src/data/results/pre_result.txt', 'w', encoding='utf-8')
+    uimg.save('/usr/local/src/data/results/single_pld_prob_result.jpg', _tiles_img)
+    f = open('/usr/local/src/data/results/single_pld_prob_result.txt', 'w', encoding='utf-8')
     for pred, line_idx in zip(results, _lines):
         if line_idx != cur_line:
             f.write('\n')
             cur_line = line_idx
-        if pred[0] == '醫':
-            continue
-        f.write("(%s,%.2f)" % pred + '\t')
+        # if pred[0] == '醫':
+        #     continue
+        # f.write(pred[0] + ' ')
+        f.write("(%s,%.2f)" % pred + ' ')
     f.close()

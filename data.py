@@ -2,22 +2,26 @@ import gc
 import json
 import os
 import re
+
 import cv2 as cv
 import numpy as np
 from progressbar import ProgressBar
 
 
 class AbstractData:
-    def __init__(self, height, width, num_class):
+    def __init__(self, height, width):
         self.height, self.width = height, width
         self.images = None
         self.labels = None
         self.indices = None
         self.predictions = None
-        self.num_class = num_class
+        # self.num_class = num_class
 
         self.label_map = {}
         self.label_map_reverse = {}
+
+        self.alias_map = {}
+        self.alias_map_reverse = {}
 
         self.batch_ptr = 0
 
@@ -40,6 +44,15 @@ class AbstractData:
     def clear_char_map(self):
         self.label_map_reverse = {}
         self.label_map = {}
+        return self
+
+    def load_alias_map(self, file_path):
+        print('Loading alias map from `%s` ...\t' % file_path, end='')
+        with open(file_path, encoding='utf-8') as f:
+            self.alias_map = json.load(f)
+        for k, v in self.alias_map.items():
+            self.alias_map_reverse[v] = k
+        print('[done]')
         return self
 
     def set_images(self, images: list):
@@ -113,11 +126,15 @@ class AbstractData:
             return self.images[indices], self.labels[indices]
 
     def unmap(self, src):
-        # if isinstance(src, list):
-        #     return list(map(lambda el: self.label_map_reverse[el], src))
-        # else:
-        #     return self.label_map_reverse[src]
-        return list(map(lambda el: self.label_map_reverse[el], src))
+        if isinstance(src, str):
+            return self.label_map_reverse[src]
+        else:
+            rs = []
+            for el in src:
+                alias = self.label_map_reverse[el]
+                char = alias if alias not in self.alias_map else self.alias_map[alias]
+                rs.append(char)
+            return rs
 
     def get(self):
         return self.images, self.labels
@@ -133,14 +150,6 @@ class AbstractData:
 
     def buff_pred(self, pred):
         self.predictions += pred
-
-
-class RotationData(AbstractData):
-    def filename2label(self, filename: str):
-        _ = filename.split('.')[:-1]
-        basename = '.'.join(_)
-        angle = round(float(basename.split('_')[1]))
-        return angle + self.num_class // 2
 
 
 class SingleCharData(AbstractData):

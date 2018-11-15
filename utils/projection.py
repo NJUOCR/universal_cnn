@@ -124,7 +124,7 @@ def get_splitter_zero(sum_array):
     splitters = []
     for i in range(1, len(sum_array) - 3):
         left, cur, right, right1, right2 = sum_array[i - 1:i + 4]
-        if left > 0 and cur == 0 and right == right1 == 0:
+        if left > 0 and cur == 0 and right == 0:
             splitters.append(i)
     return splitters
 
