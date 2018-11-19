@@ -58,13 +58,12 @@ def to_size(img, new_height, new_width):
     :param new_width:
     :return:
     """
-    # fixme 去掉可能画上去的文本框，暂时补救
-    top, left, bottom, right = get_bounds(img[1:-1, 1:-1], foreground_color='black')
+    top, left, bottom, right = get_bounds(img, foreground_color='black')
     text_img = img[top:bottom, left:right]
     if 0 in text_img.shape or None in (top, left, bottom, right):
         # 宽或高为0
         return None
-    text_img = uimg.pad_to(text_img, int(1.6*(bottom-top)), int(1.6*(right-left)), 255)
+    text_img = uimg.pad_to(text_img, int(1.4*(bottom-top)), int(1.4*(right-left)), 255)
     out_img = uimg.fit_resize(text_img, new_height, new_width)
     return out_img
 
