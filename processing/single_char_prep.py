@@ -27,7 +27,7 @@ def preprocess(page_img, draw=False):
     horizontal_smooth = (0, 0)
     # horizontal_smooth = min(15, (ori_img.shape[0] * ori_img.shape[1]) // 100000), 9
     horizontal_sum_array = proj.project(ori_img, direction='horizontal', smooth=horizontal_smooth)
-    line_splitters = proj.get_splitter_zero(horizontal_sum_array)
+    line_splitters = proj.get_splitter_end(horizontal_sum_array)
     # line_splitters = proj.get_splitter_horizontal(horizontal_sum_array)
     if draw:
         ori_img[line_splitters, :] = 180
@@ -40,7 +40,7 @@ def preprocess(page_img, draw=False):
         # vertical_smooth = max(5, (lower - upper) // 6), 6
         vertical_smooth = (0, 0)
         vertical_sum_array = proj.project(line_img, direction='vertical', smooth=vertical_smooth)
-        char_splitters = proj.get_splitter_zero(vertical_sum_array)
+        char_splitters = proj.get_splitter_end(vertical_sum_array)
         # char_splitters = proj.get_splitter(vertical_sum_array)
         if draw:
             line_img[:, char_splitters] = 180
