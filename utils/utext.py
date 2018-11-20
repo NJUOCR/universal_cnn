@@ -9,6 +9,10 @@ import utils.uchar as uchar
 import utils.uimg as uimg
 from utils.orientation import fix_orientation
 
+
+HALF_WIDTH_THRESH_FACTOR = 0.65
+MAX_MERGE_WIDTH = 1.1
+
 # 汉字，不包含汉字的标点符号
 ptn = re.compile('[\u4e00-\u9fa5]')
 
@@ -122,6 +126,8 @@ class TextLine:
         self.a = None
         self.b = None
 
+        self.__empty = True
+
     def get_char_splitters(self):
         """
 
@@ -166,9 +172,10 @@ class TextLine:
         self.split(force=False)
         offset = 0
         centers = []
-        for char in self.__text_chars:
-            c_y, c_x = char.get_content_center()
-            centers.append((c_y, c_x + offset))
+        for char in self.get_chars(only_valid=False):
+            if char.valid():
+                c_y, c_x = char.get_content_center()
+                centers.append((c_y, c_x + offset))
             offset += char.get_width()
 
         n = len(centers)
@@ -184,9 +191,9 @@ class TextLine:
         self.b = (_y - self.a * _x) / n
         # print("y = %.4f * x + %.4f" % (self.a, self.b))
         if self.drawing_copy is not None:
-            y1, x1 = centers[0]
+            x1 = 0
             p1 = x1, self.regression_fn(x1)
-            y2, x2 = centers[-1]
+            x2 = self.get_drawing_copy().shape[1] - 1
             p2 = x2, self.regression_fn(x2)
             # print(p1, p2)
             cv.line(self.drawing_copy, p1, p2, 100, thickness=1)
@@ -199,19 +206,33 @@ class TextLine:
     def regression_fn(self, x: float) -> int:
         return int(self.a * x + self.b)
 
-    def get_relative_standard_width(self):
+    def get_relative_standard_width(self, only_valid_char=True):
+        assert not self.empty() or not only_valid_char, """
+        Assertion failed, one possible reason: Which char is valid or not is unclear before `set_results()`
+        """
         cnt = {}
         # for h in map(lambda c: round(c.get_content_width() / self.get_line_height(), 1),
-        for h in map(lambda c: round(c.get_width() / self.get_line_height(), 1),
-                     self.__text_chars):
+        for h in map(lambda c: self.__relative_width(c.get_width()),
+                     self.get_chars(only_valid=only_valid_char)):
             if h not in cnt:
                 cnt[h] = 0
             cnt[h] += 1
-
         # 先选出占比最大的两个宽度，这是因为当一行中的标点符号和数字太多时，宽度众数不是中文宽度，而是数字宽度
-        public_num_2 = sorted(cnt.items(), key=lambda i: i[1], reverse=True)[:2]
+        # 注意：频次为小于2的不应当称为`众数`，它们只是离群点
+        public_num_2 = sorted(
+            filter(lambda i: i[1]>1, cnt.items()),
+            key=lambda i: i[1], reverse=True
+        )[:2]
+
+        if len(public_num_2) == 0:
+            self.empty(set_to=True)
+            self.std_width = False
+            return self.std_width
         # 从两个众数中，选择宽度大的那一个，作为标准相对宽度
         self.std_width = max(map(lambda x: x[0], public_num_2))
+
+        if self.drawing_copy is not None:
+            self.drawing_copy[5:-5, :int(self.std_width * self.get_line_height())] = 50, 50, 50
         return self.std_width
 
     def get_line_height(self):
@@ -231,10 +252,14 @@ class TextLine:
         if self.std_width is None:
             self.get_relative_standard_width()
 
-        half_thresh = self.std_width * 0.65
-        for c in self.__text_chars:
-            if round(c.get_width() / self.get_line_height(), 1) < half_thresh:
+        if self.std_width is False:
+            return self
+
+        half_thresh = self.std_width * HALF_WIDTH_THRESH_FACTOR
+        for c in self.get_chars(only_valid=True):
+            if c.valid() and self.__relative_width(c.get_width()) < half_thresh:
                 c.half(set_to=True)
+                c.drawing_copy[range(-1,-5,-1), 5:-5] = 20, 200, 20
         return self
 
     def merge_components(self):
@@ -245,26 +270,33 @@ class TextLine:
         > A chinese character takes one full `std_width`
         :return:
         """
-        def merge_score(cur_width: int, nbr: TextChar):
+        if self.std_width is False:
+            return
+
+        def merge_score(cur_width: int, nbr: TextChar, which: str=''):
+            assert which in ('left', 'right')
             if nbr is None:
                 return -1
 
             score = 0
-            add_width = cur_width + nbr.get_width()
+            add_width = cur_width + self.__relative_width(nbr.get_width())
             if nbr.half() and is_chinese(nbr.c):
                 score += 1
-            elif add_width / self.std_width > 1.1:
+            elif add_width / self.std_width > MAX_MERGE_WIDTH:
                 score = -1
             else:
-                score += 1 / abs(add_width - self.std_width)
+                # score += 1. / (abs(add_width - self.std_width) + 0.0001)
+                distance = nbr.content_left if which == 'left' else nbr.get_width() - nbr.content_right
+                score += 1. / distance
             return score
 
         def best_merge(indices: deque) -> deque:
-            cur_width = sum(map(lambda idx: self.get_chars()[idx].get_width(), indices))
-            left_nbr = self.get_chars()[indices[0]-1] if indices[0] - 1 > 0 else None
-            right_nbr = self.get_chars()[indices[-1]+1] if indices[-1] + 1 > 0 else None
-            left_score = merge_score(cur_width, left_nbr)
-            right_score = merge_score(cur_width, right_nbr)
+            # cur_width = round(sum(map(lambda idx: self.get_chars()[idx].get_width(), indices)) / self.get_line_height(), 1)
+            cur_width = self.__relative_width(sum(map(lambda idx: self.get_chars()[idx].get_width(), indices)))
+            left_nbr = self.get_chars()[indices[0]-1] if indices[0] - 1 >= 0 else None
+            right_nbr = self.get_chars()[indices[-1]+1] if indices[-1] + 1 < len(self.get_chars()) else None
+            left_score = merge_score(cur_width, left_nbr, which='left')
+            right_score = merge_score(cur_width, right_nbr, which='right')
             if left_score > 0 or right_score > 0:
                 if left_score > right_score:
                     indices.appendleft(indices[0]-1)
@@ -276,21 +308,35 @@ class TextLine:
                 # 左右都无法合并
                 return indices
 
-        for i, char in enumerate(self.__text_chars):
+        for i, char in enumerate(self.get_chars(only_valid=False)):
+            if not char.valid():
+                continue
             if is_chinese(char.c) and char.half():
                 # 预测出是汉字但只占半个字符位置
-                char.drawing_copy[[-1, -2, -3, -4], :-4] = 20, 20, 180
-                if char.valid():
-                    merged = best_merge(deque([i]))
-                    for m_char_idx in merged:
-                        self.__text_chars[m_char_idx].drawing_copy[[0, 1, 2], :] = 180, 20, 30
-                        self.__text_chars[m_char_idx].valid(set_to=False)
-                    self.__text_chars[merged[0]].drawing_copy[range(10), range(5)] = 180, 20, 30
-                    self.__text_chars[merged[-1]].drawing_copy[range(10), range(-1, -5, -1)] = 180, 20, 30
+                char.drawing_copy[range(-10, -15, -1), :-4] = 20, 20, 180
+                merged = best_merge(deque([i]))
+                for m_char_idx in merged:
+                    self.get_chars(only_valid=False)[m_char_idx].drawing_copy[[0, 1, 2], :] = 180, 20, 30
+                    self.get_chars(only_valid=False)[m_char_idx].valid(set_to=False)
+                self.get_chars(only_valid=False)[merged[0]].drawing_copy[:, range(2)] = 180, 20, 30
+                self.get_chars(only_valid=False)[merged[-1]].drawing_copy[:, range(-1, -3, -1)] = 180, 20, 30
 
+    def __relative_width(self, pixel_width):
+        return round(pixel_width / self.get_line_height(), 1)
 
-    def get_chars(self):
-        return self.split(force=False)
+    def get_chars(self, only_valid=False):
+        return list(filter(lambda char: (not only_valid) or char.valid(), self.split(force=False)))
+
+    def filter_by_p(self, p_thresh=0.9):
+        for char in self.get_chars(only_valid=False):
+            if char.p < p_thresh:
+                char.valid(set_to=False)
+        self.empty(set_to=len(self.get_chars(only_valid=True)) == 0)
+
+    def empty(self, set_to: bool = None) -> bool:
+        if set_to in (True, False):
+            self.__empty = set_to
+        return self.__empty
 
 
 class TextPage:
@@ -334,8 +380,8 @@ class TextPage:
     def get_drawing_copy(self):
         return self.drawing_copy
 
-    def get_lines(self) -> List[TextLine]:
-        return self.split(force=False)
+    def get_lines(self, ignore_empty=False) -> List[TextLine]:
+        return list(filter(lambda line: not (ignore_empty and line.empty()), self.split(force=False)))
 
     def make_infer_input(self, height=64, width=64):
         char_imgs = []
@@ -351,11 +397,20 @@ class TextPage:
                 c, p = results[ptr]
                 char.set_result(c, p=p)
                 ptr += 1
+            line.filter_by_p(p_thresh=0.9)
 
-    def format_result(self, with_p=False) -> str:
+    def format_result(self, with_p=False, p_thresh=0.9) -> str:
         buff = []
-        for line in self.get_lines():
+        for line in self.get_lines(ignore_empty=True):
             for char in line.get_chars():
+                if char.p < p_thresh:
+                    continue
                 buff.append(str(char.c) if not with_p else str((char.c, char.p)))
             buff.append('\n')
         return ''.join(buff)
+
+    def filter_by_p(self, p_thresh=0.9):
+        for line in self.get_lines():
+            for char in line.get_chars():
+                if char.p < p_thresh:
+                    char.valid(set_to=False)

@@ -4,7 +4,7 @@ from main import Main
 from utils.utext import TextPage
 
 
-def process(page_img, draw=False):
+def process(page_img, draw=False, filename='single_pld_prob_result'):
     """
     1. auto binarization
     2. orientation correcting
@@ -38,17 +38,20 @@ def process(page_img, draw=False):
     results = main.infer(infer_data=data, input_width=64, input_height=64,
                          num_class=4184, ckpt_dir='/usr/local/src/data/stage2/all/ckpts')
     page.set_result(results)
-    for line in page.get_lines():
+    page.filter_by_p(p_thresh=0.9)
+    for line in page.get_lines(ignore_empty=True):
         line.mark_half()
+        line.calculate_meanline_regression()
         line.merge_components()
-    uimg.save('/usr/local/src/data/results/single_pld_prob_result.jpg', page.drawing_copy)
+    uimg.save('/usr/local/src/data/results/%s.jpg' % filename, page.drawing_copy)
 
-    with open('/usr/local/src/data/results/single_pld_prob_result.txt', 'w', encoding='utf-8') as f:
-        f.write(page.format_result())
+    with open('/usr/local/src/data/results/%s.txt' % filename, 'w', encoding='utf-8') as f:
+        f.write(page.format_result(with_p=False))
     return page
 
 
 if __name__ == '__main__':
+    # page_img_path = "doc_imgs/2014武刑初字第0388号_故意伤害罪224页.pdf/img-0048.jpg"
     page_img_path = "doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0296.jpg"
-    process(uimg.read(page_img_path, read_flag=1), draw=True)
+    process(uimg.read(page_img_path, read_flag=1), draw=True, filename='test')
 
