@@ -1,6 +1,6 @@
 import re
 from typing import List
-
+from collections import deque
 import cv2 as cv
 import numpy as np
 
@@ -30,6 +30,7 @@ class TextChar:
         self.is_half = None
         self.c, self.p = None, 0
 
+        # The predication for this char is possibly wrong. If `__valid is False`, this char has been merged.
         self.__valid = False
 
         self.__box_content()
@@ -244,36 +245,48 @@ class TextLine:
         > A chinese character takes one full `std_width`
         :return:
         """
-        def merge_score(tgt: TextChar, nbr: TextChar):
+        def merge_score(cur_width: int, nbr: TextChar):
             if nbr is None:
-                return 0
+                return -1
 
             score = 0
-            add_width = tgt.get_width() + nbr.get_width()
+            add_width = cur_width + nbr.get_width()
             if nbr.half() and is_chinese(nbr.c):
                 score += 1
             elif add_width / self.std_width > 1.1:
-                score = 0
+                score = -1
             else:
                 score += 1 / abs(add_width - self.std_width)
             return score
 
-        def best_merge(idx_list: list) -> list:
-            left = idx_list[0] - 1
-            right = idx_list[-1] + 1
-
-            if left > 0:
-                pass
+        def best_merge(indices: deque) -> deque:
+            cur_width = sum(map(lambda idx: self.get_chars()[idx].get_width(), indices))
+            left_nbr = self.get_chars()[indices[0]-1] if indices[0] - 1 > 0 else None
+            right_nbr = self.get_chars()[indices[-1]+1] if indices[-1] + 1 > 0 else None
+            left_score = merge_score(cur_width, left_nbr)
+            right_score = merge_score(cur_width, right_nbr)
+            if left_score > 0 or right_score > 0:
+                if left_score > right_score:
+                    indices.appendleft(indices[0]-1)
+                else:
+                    indices.append(indices[-1]+1)
+                # fixme python 递归可能会很慢，需要检查这一步是否花费太长时间
+                return best_merge(indices)
+            else:
+                # 左右都无法合并
+                return indices
 
         for i, char in enumerate(self.__text_chars):
             if is_chinese(char.c) and char.half():
                 # 预测出是汉字但只占半个字符位置
                 char.drawing_copy[[-1, -2, -3, -4], :-4] = 20, 20, 180
-                left_nbr = self.get_chars()[i - 1] if i > 0 else None
-                right_nbr = self.get_chars()[i + 1] if i < len(self.get_chars()) - 2 else None
-                left_score = merge_score(char, left_nbr)
-                right_score = merge_score(char, right_nbr)
-                # todo tomorrow's work
+                if char.valid():
+                    merged = best_merge(deque([i]))
+                    for m_char_idx in merged:
+                        self.__text_chars[m_char_idx].drawing_copy[[0, 1, 2], :] = 180, 20, 30
+                        self.__text_chars[m_char_idx].valid(set_to=False)
+                    self.__text_chars[merged[0]].drawing_copy[range(10), range(5)] = 180, 20, 30
+                    self.__text_chars[merged[-1]].drawing_copy[range(10), range(-1, -5, -1)] = 180, 20, 30
 
 
     def get_chars(self):
