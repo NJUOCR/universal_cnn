@@ -2,6 +2,7 @@ import utils.uimg as uimg
 from data import SingleCharData
 from main import Main
 from utils.utext import TextPage
+import cv2 as cv
 
 
 def process(page_img, draw=False, filename='single_pld_prob_result'):
@@ -16,10 +17,13 @@ def process(page_img, draw=False, filename='single_pld_prob_result'):
     :param page_img:
     :return:
     """
-    page = TextPage(page_img, 0, drawing_copy=page_img.copy() if draw else None)
+    page = TextPage(page_img, 0, drawing_copy=None)
 
     # 1.
     page.auto_bin()
+
+    if draw:
+        page.drawing_copy = cv.cvtColor(page.img.copy(), cv.COLOR_GRAY2BGR)
 
     # 2.
     page.fix_orientation()
@@ -51,7 +55,7 @@ def process(page_img, draw=False, filename='single_pld_prob_result'):
 
 
 if __name__ == '__main__':
-    # page_img_path = "doc_imgs/2014武刑初字第0388号_故意伤害罪224页.pdf/img-0048.jpg"
-    page_img_path = "doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0296.jpg"
+    page_img_path = "doc_imgs/2014武刑初字第0388号_故意伤害罪224页.pdf/img-0355.jpg"
+    # page_img_path = "doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0296.jpg"
     process(uimg.read(page_img_path, read_flag=1), draw=True, filename='test')
 

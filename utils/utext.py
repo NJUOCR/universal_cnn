@@ -1,5 +1,5 @@
 import re
-from typing import List
+from typing import List, Tuple
 from collections import deque
 import cv2 as cv
 import numpy as np
@@ -41,21 +41,34 @@ class TextChar:
 
     def __box_content(self):
         """
-        尝试使用矩形框出文字范围
+        Find a rectangle to box the text region
+
+        > If it is an empty image, the 4 values would be `None`
+        :return: None
         """
         self.content_top, self.content_left, self.content_bottom, self.content_right = uchar.get_bounds(
-            self.img[1:-1, 1:-1])
+            self.img)
 
-    def has_content(self):
+    def has_content(self) -> bool:
+        """
+        If an image has content (aka. text in our context), none of the 4 values should be `None`
+        :return: True | False
+        """
         return None not in (self.content_top, self.content_left, self.content_bottom, self.content_right)
 
-    def get_content_height(self):
+    def get_content_height(self) -> int or None:
         return self.content_bottom - self.content_top if self.has_content() else None
 
-    def get_content_width(self):
+    def get_content_width(self) -> int or None:
         return self.content_right - self.content_left if self.has_content() else None
 
-    def get_content_center(self):
+    def get_content_center(self) -> Tuple[int] or None:
+        """
+        Find the center point of the content box (text region).
+        *This is mainly used for making **the regression line**,
+        which is used for distinguishing `’` from `,` and so on*
+        :return: the content center
+        """
         if not self.has_content():
             return None
         center_y, center_x = int((self.content_bottom + self.content_top) // 2), int(
@@ -67,10 +80,11 @@ class TextChar:
 
     def get_barycenter(self, direction: str = 'vertical', foreground_color: str = 'black') -> float or None:
         """
-        计算前景色像素的重心
-        :param direction: 方向分量 'vertical | horizontal' # todo 'both'
-        :param foreground_color: 文字的颜色 `black | white`
-        :return: 以图片左上角为原点，返回重心的相对偏移，取值范围[0,1]
+        ** NOT IN USE **
+        calculate the barycenter of content (text)
+        :param direction: 'vertical | horizontal' # todo 'both'
+        :param foreground_color: aka. the text color `black | white`. **TO BE IMPLEMENT**
+        :return: the relative offset to the top-left point of the image
         """
         assert direction in ('vertical', 'horizontal')
         if not self.has_content():
@@ -86,16 +100,33 @@ class TextChar:
         relative_barycenter = absolute_barycenter / sum_array.shape[0]
         return relative_barycenter
 
-    def get_width(self):
+    def get_width(self) -> int:
         return self.img.shape[1]
 
-    def get_height(self):
+    def get_height(self) -> int:
         return self.img.shape[0]
 
     def fit_resize(self, new_height, new_width):
+        """
+        Resize the char image to fit the tensorflow model input.
+        This function does not literally resize image to the new size, it briefly following principles below:
+        1. Original images cannot be scaled up, but can be scaled down: if the image is too small, it will not be recognized by tf
+        model, even if scaled into a larger one
+        2. Images with smaller size should be padded into a larger one
+        3. Both of the width and height axis should be scaled at the same ratio
+        4. A binaryzation will be performed in the end
+        :param new_height:
+        :param new_width:
+        :return: A numpy array
+        """
         return uchar.to_size(self.img, new_height, new_width)
 
     def half(self, set_to=None):
+        """
+        getter and setter
+        :param set_to: if it is `True` or `False`, set `self.is_half` accordingly
+        :return: whether this char takes half a standard width
+        """
         if set_to in (True, False):
             self.is_half = set_to
         return self.is_half
@@ -110,10 +141,21 @@ class TextChar:
             self.__valid = set_to
         return self.__valid
 
+    def draw(self, y: tuple, x: tuple, color: tuple):
+        if self.drawing_copy is not None:
+            self.drawing_copy[y[0]:y[1], x[0]:x[1]] = color
+
 
 class TextLine:
 
     def __init__(self, line_img, idx, drawing_copy=None):
+        """
+
+        :param line_img: the original line image
+        :param idx: line id
+        :param drawing_copy: A numpy array, copy of `line_img`, auxiliary marks should be drew on
+        `drawing_copy` not the original image ( in this case, `line_img`)
+        """
         self.img = line_img
         self.idx = idx
         # self.char_splitters = []
@@ -127,6 +169,8 @@ class TextLine:
         self.b = None
 
         self.__empty = True
+
+        self.__merge_dict = {}
 
     def get_char_splitters(self):
         """
@@ -166,14 +210,15 @@ class TextLine:
 
     def calculate_meanline_regression(self) -> bool:
         """
-        The regression function towards the center points of text contents in char images
-        :return: `True` if successful else `False`
+        The regression function towards the center points of text contents in char images.
+        ** chars that are `invalid` or takes half a `std_width` will be neglected**
+        :return: `True` if success else `False`
         """
         self.split(force=False)
         offset = 0
         centers = []
         for char in self.get_chars(only_valid=False):
-            if char.valid():
+            if char.valid() and not char.half():
                 c_y, c_x = char.get_content_center()
                 centers.append((c_y, c_x + offset))
             offset += char.get_width()
@@ -259,7 +304,7 @@ class TextLine:
         for c in self.get_chars(only_valid=True):
             if c.valid() and self.__relative_width(c.get_width()) < half_thresh:
                 c.half(set_to=True)
-                c.drawing_copy[range(-1,-5,-1), 5:-5] = 20, 200, 20
+                c.draw((-5, -1), (5, -5), (20, 200, 20))
         return self
 
     def merge_components(self):
@@ -291,7 +336,6 @@ class TextLine:
             return score
 
         def best_merge(indices: deque) -> deque:
-            # cur_width = round(sum(map(lambda idx: self.get_chars()[idx].get_width(), indices)) / self.get_line_height(), 1)
             cur_width = self.__relative_width(sum(map(lambda idx: self.get_chars()[idx].get_width(), indices)))
             left_nbr = self.get_chars()[indices[0]-1] if indices[0] - 1 >= 0 else None
             right_nbr = self.get_chars()[indices[-1]+1] if indices[-1] + 1 < len(self.get_chars()) else None
@@ -313,13 +357,14 @@ class TextLine:
                 continue
             if is_chinese(char.c) and char.half():
                 # 预测出是汉字但只占半个字符位置
-                char.drawing_copy[range(-10, -15, -1), :-4] = 20, 20, 180
+                char.draw((-15, -10), (None, -4), (20, 20, 180))
                 merged = best_merge(deque([i]))
                 for m_char_idx in merged:
-                    self.get_chars(only_valid=False)[m_char_idx].drawing_copy[[0, 1, 2], :] = 180, 20, 30
+                    # self.get_chars(only_valid=False)[m_char_idx].drawing_copy[[0, 1, 2], :] = 180, 20, 30
+                    self.get_chars(only_valid=False)[m_char_idx].draw((0, 3), (None, None), (180, 20, 20))
                     self.get_chars(only_valid=False)[m_char_idx].valid(set_to=False)
-                self.get_chars(only_valid=False)[merged[0]].drawing_copy[:, range(2)] = 180, 20, 30
-                self.get_chars(only_valid=False)[merged[-1]].drawing_copy[:, range(-1, -3, -1)] = 180, 20, 30
+                self.get_chars(only_valid=False)[merged[0]].draw((None, None), (0, 2), (180, 20, 30))
+                self.get_chars(only_valid=False)[merged[-1]].draw((None, None), (-3, -1), (180, 20, 30))
 
     def __relative_width(self, pixel_width):
         return round(pixel_width / self.get_line_height(), 1)
