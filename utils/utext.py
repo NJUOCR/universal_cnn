@@ -1,5 +1,6 @@
 import re
 from typing import List, Tuple
+from functools import reduce
 from collections import deque
 import cv2 as cv
 import numpy as np
@@ -170,7 +171,8 @@ class TextLine:
 
         self.__empty = True
 
-        self.__merge_dict = {}
+        self.__merged_from = []
+        self.__merged_char = []
 
     def get_char_splitters(self):
         """
@@ -358,19 +360,42 @@ class TextLine:
             if is_chinese(char.c) and char.half():
                 # 预测出是汉字但只占半个字符位置
                 char.draw((-15, -10), (None, -4), (20, 20, 180))
-                merged = best_merge(deque([i]))
-                for m_char_idx in merged:
-                    # self.get_chars(only_valid=False)[m_char_idx].drawing_copy[[0, 1, 2], :] = 180, 20, 30
-                    self.get_chars(only_valid=False)[m_char_idx].draw((0, 3), (None, None), (180, 20, 20))
+                merged_indices = best_merge(deque([i]))
+                if len(merged_indices) > 1:
+                    self.__merged_from.append(tuple(merged_indices))
+                    merged_img = np.concatenate(
+                        list(
+                            map(lambda _char_idx: self.get_chars(only_valid=False)[_char_idx].img,
+                                merged_indices)
+                        ),
+                        axis=1
+                    )
+                    self.__merged_char.append(TextChar(merged_img))
+
+                for m_char_idx in merged_indices:
                     self.get_chars(only_valid=False)[m_char_idx].valid(set_to=False)
-                self.get_chars(only_valid=False)[merged[0]].draw((None, None), (0, 2), (180, 20, 30))
-                self.get_chars(only_valid=False)[merged[-1]].draw((None, None), (-3, -1), (180, 20, 30))
+                    self.get_chars(only_valid=False)[m_char_idx].draw((0, 3), (None, None), (180, 20, 20))
+                self.get_chars(only_valid=False)[merged_indices[0]].draw((None, None), (0, 2), (180, 20, 30))
+                self.get_chars(only_valid=False)[merged_indices[-1]].draw((None, None), (-3, -1), (180, 20, 30))
 
     def __relative_width(self, pixel_width):
         return round(pixel_width / self.get_line_height(), 1)
 
     def get_chars(self, only_valid=False):
+        """
+        Get char objects.
+        > ** ATTENTION: merged chars are excluded**
+        > To get merged chars, use `get_merged_chars()`
+        :param only_valid:
+        :return:
+        """
         return list(filter(lambda char: (not only_valid) or char.valid(), self.split(force=False)))
+
+    def get_merged_indices(self) -> List[tuple]:
+        return self.__merged_from
+
+    def get_merged_chars(self) -> List[TextChar]:
+        return self.__merged_char
 
     def filter_by_p(self, p_thresh=0.9):
         for char in self.get_chars(only_valid=False):
@@ -425,17 +450,30 @@ class TextPage:
     def get_drawing_copy(self):
         return self.drawing_copy
 
-    def get_lines(self, ignore_empty=False) -> List[TextLine]:
+    def get_lines(self, ignore_empty: bool=False) -> List[TextLine]:
         return list(filter(lambda line: not (ignore_empty and line.empty()), self.split(force=False)))
 
-    def make_infer_input(self, height=64, width=64):
+    def make_infer_input_1(self, height=64, width=64):
+        """
+        This function is for **first round** inferring, it will not include the merged chars
+        :param height:
+        :param width:
+        :return:
+        """
         char_imgs = []
         for line in self.split(force=False):
             for char in line.split(force=False):
                 char_imgs.append(char.fit_resize(height, width))
         return char_imgs
 
-    def set_result(self, results):
+    def make_infer_input_2(self, height=64, width=64):
+        char_imgs = []
+        for line in self.get_lines(ignore_empty=True):
+            for m_char in line.get_merged_chars():
+                char_imgs.append(m_char.fit_resize(height, width))
+        return char_imgs
+
+    def set_result_1(self, results):
         ptr = 0
         for line in self.get_lines():
             for char in line.get_chars():
@@ -443,6 +481,14 @@ class TextPage:
                 char.set_result(c, p=p)
                 ptr += 1
             line.filter_by_p(p_thresh=0.9)
+
+    def set_result_2(self, results):
+        ptr = 0
+        for line in self.get_lines(ignore_empty=True):
+            for char in line.get_merged_chars():
+                c, p = results[ptr]
+                char.set_result(c, p=p)
+                ptr += 1
 
     def format_result(self, with_p=False, p_thresh=0.9) -> str:
         buff = []
@@ -453,6 +499,32 @@ class TextPage:
                 buff.append(str(char.c) if not with_p else str((char.c, char.p)))
             buff.append('\n')
         return ''.join(buff)
+
+    def format_markdown(self, p_thresh=0.9):
+        buff = []
+        for line in self.get_lines(ignore_empty=True):
+            line_buff = []
+            for char in line.get_chars():
+                line_buff.append(str(char.c) if char.p > p_thresh else "")
+            for m_indices, m_char in zip(line.get_merged_indices(), line.get_merged_chars()):
+                line_buff[m_indices[0]] = '~~`' + line_buff[m_indices[0]]
+                line_buff[m_indices[-1]] = line_buff[m_indices[-1]] + '`~~'
+                line_buff.insert(m_indices[-1] + 1, ("**%s**" % m_char.c) if m_char.p > p_thresh else '')
+            buff.append(''.join(line_buff))
+        return '\n\n'.join(buff)
+
+    def format_html(self, tplt: str, p_thresh=0.9):
+        buff = []
+        for line in self.get_lines(ignore_empty=True):
+            line_buff = []
+            for char in line.get_chars():
+                line_buff.append(("<span>%s</span>" % char.c) if char.p > p_thresh else "")
+            for m_indices, m_char in zip(line.get_merged_indices(), line.get_merged_chars()):
+                line_buff[m_indices[0]] = '<code class="inline"><del>' + line_buff[m_indices[0]]
+                line_buff[m_indices[-1]] = line_buff[m_indices[-1]] + '</del></code>'
+                line_buff.insert(m_indices[-1] + 1, ("<strong>%s</strong>" % m_char.c) if m_char.p > p_thresh else '')
+            buff.append("<p>%s</p>" % ''.join(line_buff))
+        return tplt.replace('%REPLACE%', '\n'.join(buff))
 
     def filter_by_p(self, p_thresh=0.9):
         for line in self.get_lines():

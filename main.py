@@ -16,6 +16,8 @@ class Main:
         self.sess = tf.Session(config=config)
         self.saver = None
 
+        self.infer_model = None
+
     def run(self, mode):
         self.sess.run(tf.global_variables_initializer())
         if mode in ('train',):
@@ -102,16 +104,17 @@ class Main:
         input_width = input_width or args['input_width']
         input_height = input_height or args['input_height']
         num_class = num_class or args['num_class']
-
-        model = Model(input_width, input_height, num_class, 'infer')
-        model.build()
-        self.restore(ckpt_dir=ckpt_dir)
-        print("start inferring")
         batch_size = batch_size or args['batch_size']
         infer_data = infer_data or Data(args['input_height'], args['input_width']) \
             .load_char_map(args['charmap_path']) \
             .read(args['dir_infer']) \
             .init_indices()
+
+        if self.infer_model is None:
+            self.infer_model = Model(input_width, input_height, num_class, 'infer')
+            self.infer_model.build()
+            self.restore(ckpt_dir=ckpt_dir)
+        print("start inferring")
 
         infer_batch = infer_data.next_batch(batch_size)
         self.sess.run(tf.local_variables_initializer())
@@ -119,8 +122,8 @@ class Main:
         buff = []
         while infer_batch is not None:
             infer_images, infer_labels = infer_batch
-            infer_feed_dict = model.feed(infer_images, infer_labels)
-            classes, p, logits = self.sess.run([model.classes, model.prob, model.logits],
+            infer_feed_dict = self.infer_model.feed(infer_images, infer_labels)
+            classes, p, logits = self.sess.run([self.infer_model.classes, self.infer_model.prob, self.infer_model.logits],
                                                feed_dict=infer_feed_dict)
             # buff += [(pred, max(logit)) for pred, logit in zip(infer_data.unmap(classes.tolist()), logits)]
             buff += [(pred, max(prob)) for pred, prob in zip(infer_data.unmap(classes.tolist()), p)]
