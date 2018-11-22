@@ -320,8 +320,9 @@ class TextLine:
         if self.std_width is False:
             return
 
-        def merge_score(cur_width: int, nbr: TextChar, which: str=''):
+        def merge_score(cur_indices: deque, nbr: TextChar, which: str=''):
             assert which in ('left', 'right')
+            cur_width = self.__relative_width(sum(map(lambda idx: self.get_chars()[idx].get_width(), cur_indices)))
             if nbr is None:
                 return -1
 
@@ -330,7 +331,11 @@ class TextLine:
             if nbr.half() and is_chinese(nbr.c):
                 score += 1
 
-            distance = nbr.content_left if which == 'right' else nbr.get_width() - nbr.content_right
+            cur_left = self.get_chars()[cur_indices[0]]
+            margin_left = cur_left.content_left + nbr.get_width() - nbr.content_right
+            cur_right = self.get_chars()[cur_indices[-1]]
+            margin_right = cur_right.get_width() - cur_right.content_left + nbr.content_left
+            distance = margin_right if which == 'right' else margin_left
             score += 1. / distance
 
             if add_width / self.std_width > MAX_MERGE_WIDTH:
@@ -338,11 +343,10 @@ class TextLine:
             return score
 
         def best_merge(indices: deque) -> deque:
-            cur_width = self.__relative_width(sum(map(lambda idx: self.get_chars()[idx].get_width(), indices)))
             left_nbr = self.get_chars()[indices[0]-1] if indices[0] - 1 >= 0 else None
             right_nbr = self.get_chars()[indices[-1]+1] if indices[-1] + 1 < len(self.get_chars()) else None
-            left_score = merge_score(cur_width, left_nbr, which='left')
-            right_score = merge_score(cur_width, right_nbr, which='right')
+            left_score = merge_score(indices, left_nbr, which='left')
+            right_score = merge_score(indices, right_nbr, which='right')
             if left_score > 0 or right_score > 0:
                 if left_score > right_score:
                     indices.appendleft(indices[0]-1)
