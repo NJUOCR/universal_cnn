@@ -1,6 +1,5 @@
 import re
 from typing import List, Tuple
-from functools import reduce
 from collections import deque
 import cv2 as cv
 import numpy as np
@@ -13,6 +12,7 @@ from utils.orientation import fix_orientation
 
 HALF_WIDTH_THRESH_FACTOR = 0.7
 MAX_MERGE_WIDTH = 1.3
+DEFAULT_NOISE_P_THRESH = 0.5
 
 # 汉字，不包含汉字的标点符号
 ptn = re.compile('[\u4e00-\u9fa5]')
@@ -331,12 +331,16 @@ class TextLine:
             if nbr.half() and is_chinese(nbr.c):
                 score += 1
 
+            # margin
             cur_left = self.get_chars()[cur_indices[0]]
             margin_left = cur_left.content_left + nbr.get_width() - nbr.content_right
             cur_right = self.get_chars()[cur_indices[-1]]
             margin_right = cur_right.get_width() - cur_right.content_left + nbr.content_left
             distance = margin_right if which == 'right' else margin_left
             score += 1. / distance
+
+            # width
+            score += (1. / (cur_width + self.__relative_width(nbr.get_width())))
 
             if add_width / self.std_width > MAX_MERGE_WIDTH:
                 score = -1
@@ -401,7 +405,7 @@ class TextLine:
     def get_merged_chars(self) -> List[TextChar]:
         return self.__merged_char
 
-    def filter_by_p(self, p_thresh=0.9):
+    def filter_by_p(self, p_thresh=DEFAULT_NOISE_P_THRESH):
         for char in self.get_chars(only_valid=False):
             if char.p < p_thresh:
                 char.valid(set_to=False)
@@ -484,7 +488,7 @@ class TextPage:
                 c, p = results[ptr]
                 char.set_result(c, p=p)
                 ptr += 1
-            line.filter_by_p(p_thresh=0.9)
+            line.filter_by_p(p_thresh=DEFAULT_NOISE_P_THRESH)
 
     def set_result_2(self, results):
         ptr = 0
@@ -494,7 +498,7 @@ class TextPage:
                 char.set_result(c, p=p)
                 ptr += 1
 
-    def format_result(self, with_p=False, p_thresh=0.9) -> str:
+    def format_result(self, with_p=False, p_thresh=DEFAULT_NOISE_P_THRESH) -> str:
         buff = []
         for line in self.get_lines(ignore_empty=True):
             for char in line.get_chars():
@@ -504,7 +508,7 @@ class TextPage:
             buff.append('\n')
         return ''.join(buff)
 
-    def format_markdown(self, p_thresh=0.9):
+    def format_markdown(self, p_thresh=DEFAULT_NOISE_P_THRESH):
         buff = []
         for line in self.get_lines(ignore_empty=True):
             line_buff = []
@@ -517,7 +521,7 @@ class TextPage:
             buff.append(''.join(line_buff))
         return '\n\n'.join(buff)
 
-    def format_html(self, tplt: str, p_thresh=0.9):
+    def format_html(self, tplt: str, p_thresh=DEFAULT_NOISE_P_THRESH):
         buff = []
         for line in self.get_lines(ignore_empty=True):
             line_buff = []
@@ -530,7 +534,7 @@ class TextPage:
             buff.append("<p>%s</p>" % ''.join(line_buff))
         return tplt.replace('%REPLACE%', '\n'.join(buff))
 
-    def filter_by_p(self, p_thresh=0.9):
+    def filter_by_p(self, p_thresh=DEFAULT_NOISE_P_THRESH):
         for line in self.get_lines():
             for char in line.get_chars():
                 if char.p < p_thresh:

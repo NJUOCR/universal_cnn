@@ -63,6 +63,6 @@ def process(page_img, draw=False, filename='single_pld_prob_result'):
 
 
 if __name__ == '__main__':
-    page_img_path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0001.jpg"
+    page_img_path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0023.jpg"
     # page_img_path = "doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0296.jpg"
     process(uimg.read(page_img_path, read_flag=1), draw=True, filename='test')
