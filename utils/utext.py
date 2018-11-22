@@ -11,8 +11,8 @@ import utils.uimg as uimg
 from utils.orientation import fix_orientation
 
 
-HALF_WIDTH_THRESH_FACTOR = 0.65
-MAX_MERGE_WIDTH = 1.4
+HALF_WIDTH_THRESH_FACTOR = 0.7
+MAX_MERGE_WIDTH = 1.3
 
 # 汉字，不包含汉字的标点符号
 ptn = re.compile('[\u4e00-\u9fa5]')
