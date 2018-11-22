@@ -116,11 +116,14 @@ class TextChar:
         2. Images with smaller size should be padded into a larger one
         3. Both of the width and height axis should be scaled at the same ratio
         4. A binaryzation will be performed in the end
+
+        > A white image will return if there is a failure
         :param new_height:
         :param new_width:
         :return: A numpy array
         """
-        return uchar.to_size(self.img, new_height, new_width)
+        resized_img = uchar.to_size(self.img, new_height, new_width)
+        return resized_img if resized_img is not None else (np.ones((new_height, new_width), dtype=np.uint8) * 255)
 
     def half(self, set_to=None):
         """
