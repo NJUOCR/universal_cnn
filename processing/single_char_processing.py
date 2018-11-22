@@ -46,7 +46,7 @@ def process(page_img, draw=False, filename='single_pld_prob_result'):
     page.filter_by_p(p_thresh=0.9)
     for line in page.get_lines(ignore_empty=True):
         line.mark_half()
-        line.calculate_meanline_regression()
+        # line.calculate_meanline_regression()
         line.merge_components()
     uimg.save('/usr/local/src/data/results/%s.jpg' % filename, page.drawing_copy)
     data.set_images(page.make_infer_input_2()).init_indices()
@@ -63,6 +63,6 @@ def process(page_img, draw=False, filename='single_pld_prob_result'):
 
 
 if __name__ == '__main__':
-    page_img_path = "doc_imgs/2014武刑初字第0388号_故意伤害罪224页.pdf/img-0355.jpg"
+    page_img_path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0001.jpg"
     # page_img_path = "doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0296.jpg"
     process(uimg.read(page_img_path, read_flag=1), draw=True, filename='test')

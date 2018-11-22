@@ -12,7 +12,7 @@ from utils.orientation import fix_orientation
 
 
 HALF_WIDTH_THRESH_FACTOR = 0.65
-MAX_MERGE_WIDTH = 1.1
+MAX_MERGE_WIDTH = 1.4
 
 # 汉字，不包含汉字的标点符号
 ptn = re.compile('[\u4e00-\u9fa5]')
@@ -329,12 +329,12 @@ class TextLine:
             add_width = cur_width + self.__relative_width(nbr.get_width())
             if nbr.half() and is_chinese(nbr.c):
                 score += 1
-            elif add_width / self.std_width > MAX_MERGE_WIDTH:
+
+            distance = nbr.content_left if which == 'right' else nbr.get_width() - nbr.content_right
+            score += 1. / distance
+
+            if add_width / self.std_width > MAX_MERGE_WIDTH:
                 score = -1
-            else:
-                # score += 1. / (abs(add_width - self.std_width) + 0.0001)
-                distance = nbr.content_left if which == 'left' else nbr.get_width() - nbr.content_right
-                score += 1. / distance
             return score
 
         def best_merge(indices: deque) -> deque:
@@ -519,10 +519,10 @@ class TextPage:
             line_buff = []
             for char in line.get_chars():
                 line_buff.append(("<span>%s</span>" % char.c) if char.p > p_thresh else "")
-            for m_indices, m_char in zip(line.get_merged_indices(), line.get_merged_chars()):
-                line_buff[m_indices[0]] = '<code class="inline"><del>' + line_buff[m_indices[0]]
-                line_buff[m_indices[-1]] = line_buff[m_indices[-1]] + '</del></code>'
-                line_buff.insert(m_indices[-1] + 1, ("<strong>%s</strong>" % m_char.c) if m_char.p > p_thresh else '')
+            for offset, (m_indices, m_char) in enumerate(zip(line.get_merged_indices(), line.get_merged_chars())):
+                line_buff[m_indices[0] + offset] = '<code class="inline"><del>' + line_buff[m_indices[0] + offset]
+                line_buff[m_indices[-1] + offset] = line_buff[m_indices[-1] + offset] + '</del></code>'
+                line_buff.insert(m_indices[-1] + 1 + offset, ("<strong>%s</strong>" % m_char.c) if m_char.p > p_thresh else '')
             buff.append("<p>%s</p>" % ''.join(line_buff))
         return tplt.replace('%REPLACE%', '\n'.join(buff))
 

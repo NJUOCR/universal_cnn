@@ -129,7 +129,7 @@ def get_splitter_end(sum_array, default_end=True):
     splitters = []
     for i in range(1, len(sum_array) - 3):
         left, cur, right, right1, right2 = sum_array[i - 1:i + 4]
-        if right1 > 0 and right==0 and cur == 0 and left == 0:
+        if right > 0 and cur == 0 and left == 0:
             splitters.append(i)
     if default_end:
         for j in range(len(sum_array) - 2, 2, -1):
