@@ -10,7 +10,7 @@ import utils.uchar as uchar
 import utils.uimg as uimg
 from utils.orientation import fix_orientation
 
-HALF_WIDTH_THRESH_FACTOR = 0.7
+HALF_WIDTH_THRESH_FACTOR = 0.8
 MAX_MERGE_WIDTH = 1.35
 DEFAULT_NOISE_P_THRESH = 0.5
 
@@ -359,7 +359,7 @@ class TextLine:
 
             # width
             # score += (1. / (cur_width + self.__relative_width(nbr.get_width())))
-            add_width = cur_width + self.__relative_width(nbr.get_content_width() - nbr.get_padding(which))
+            add_width = cur_width + self.__relative_width(nbr.get_content_width() + distance)
             score += (1. / (1e-4 + add_width))
 
             if add_width / self.std_width > MAX_MERGE_WIDTH:
