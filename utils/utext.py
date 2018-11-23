@@ -1,6 +1,7 @@
 import re
-from typing import List, Tuple
 from collections import deque
+from typing import List, Tuple
+
 import cv2 as cv
 import numpy as np
 
@@ -9,9 +10,8 @@ import utils.uchar as uchar
 import utils.uimg as uimg
 from utils.orientation import fix_orientation
 
-
 HALF_WIDTH_THRESH_FACTOR = 0.7
-MAX_MERGE_WIDTH = 1.3
+MAX_MERGE_WIDTH = 1.35
 DEFAULT_NOISE_P_THRESH = 0.5
 
 # 汉字，不包含汉字的标点符号
@@ -31,6 +31,8 @@ class TextChar:
         self.content_bottom = None
         self.content_left = None
         self.content_right = None
+
+        self.merged = False
 
         self.is_half = None
         self.c, self.p = None, 0
@@ -79,12 +81,11 @@ class TextChar:
                          thickness=3)
         return center_y, center_x
 
-    def get_barycenter(self, direction: str = 'vertical', foreground_color: str = 'black') -> float or None:
+    def get_barycenter(self, direction: str = 'vertical') -> float or None:
         """
         ** NOT IN USE **
         calculate the barycenter of content (text)
         :param direction: 'vertical | horizontal' # todo 'both'
-        :param foreground_color: aka. the text color `black | white`. **TO BE IMPLEMENT**
         :return: the relative offset to the top-left point of the image
         """
         assert direction in ('vertical', 'horizontal')
@@ -111,8 +112,8 @@ class TextChar:
         """
         Resize the char image to fit the tensorflow model input.
         This function does not literally resize image to the new size, it briefly following principles below:
-        1. Original images cannot be scaled up, but can be scaled down: if the image is too small, it will not be recognized by tf
-        model, even if scaled into a larger one
+        1. Original images cannot be scaled up, but can be scaled down: if the image is too small, it will not be
+        recognized by tf model, even if scaled into a larger one
         2. Images with smaller size should be padded into a larger one
         3. Both of the width and height axis should be scaled at the same ratio
         4. A binaryzation will be performed in the end
@@ -270,7 +271,7 @@ class TextLine:
         # 先选出占比最大的两个宽度，这是因为当一行中的标点符号和数字太多时，宽度众数不是中文宽度，而是数字宽度
         # 注意：频次为小于2的不应当称为`众数`，它们只是离群点
         public_num_2 = sorted(
-            filter(lambda i: i[1]>1, cnt.items()),
+            filter(lambda i: i[1] > 1, cnt.items()),
             key=lambda i: i[1], reverse=True
         )[:2]
 
@@ -323,10 +324,10 @@ class TextLine:
         if self.std_width is False:
             return
 
-        def merge_score(cur_indices: deque, nbr: TextChar, which: str=''):
+        def merge_score(cur_indices: deque, nbr: TextChar, which: str = ''):
             assert which in ('left', 'right')
             cur_width = self.__relative_width(sum(map(lambda idx: self.get_chars()[idx].get_width(), cur_indices)))
-            if nbr is None:
+            if nbr is None or nbr.merged is True:
                 return -1
 
             score = 0
@@ -350,15 +351,17 @@ class TextLine:
             return score
 
         def best_merge(indices: deque) -> deque:
-            left_nbr = self.get_chars()[indices[0]-1] if indices[0] - 1 >= 0 else None
-            right_nbr = self.get_chars()[indices[-1]+1] if indices[-1] + 1 < len(self.get_chars()) else None
+            left_nbr = self.get_chars()[indices[0] - 1] if indices[0] - 1 >= 0 else None
+            right_nbr = self.get_chars()[indices[-1] + 1] if indices[-1] + 1 < len(self.get_chars()) else None
             left_score = merge_score(indices, left_nbr, which='left')
             right_score = merge_score(indices, right_nbr, which='right')
             if left_score > 0 or right_score > 0:
                 if left_score > right_score:
-                    indices.appendleft(indices[0]-1)
+                    indices.appendleft(indices[0] - 1)
+                    self.get_chars()[indices[0] - 1].merged = True
                 else:
-                    indices.append(indices[-1]+1)
+                    indices.append(indices[-1] + 1)
+                    self.get_chars()[indices[-1] + 1].merged = True
                 # fixme python 递归可能会很慢，需要检查这一步是否花费太长时间
                 return best_merge(indices)
             else:
@@ -452,16 +455,15 @@ class TextPage:
 
             for line_id, (upper, lower) in enumerate(zip(line_splitters, line_splitters[1:])):
                 line_img = self.img[upper:lower, :]
-                text_line = TextLine(line_img, line_id,
-                                     drawing_copy=self.drawing_copy[upper:lower,
-                                                  :] if self.drawing_copy is not None else None)
+                line_drawing_copy = self.drawing_copy[upper:lower, :] if self.drawing_copy is not None else None
+                text_line = TextLine(line_img, line_id,  drawing_copy=line_drawing_copy)
                 self.__text_lines.append(text_line)
         return self.__text_lines
 
     def get_drawing_copy(self):
         return self.drawing_copy
 
-    def get_lines(self, ignore_empty: bool=False) -> List[TextLine]:
+    def get_lines(self, ignore_empty: bool = False) -> List[TextLine]:
         return list(filter(lambda line: not (ignore_empty and line.empty()), self.split(force=False)))
 
     def make_infer_input_1(self, height=64, width=64):
@@ -533,7 +535,8 @@ class TextPage:
             for offset, (m_indices, m_char) in enumerate(zip(line.get_merged_indices(), line.get_merged_chars())):
                 line_buff[m_indices[0] + offset] = '<code class="inline"><del>' + line_buff[m_indices[0] + offset]
                 line_buff[m_indices[-1] + offset] = line_buff[m_indices[-1] + offset] + '</del></code>'
-                line_buff.insert(m_indices[-1] + 1 + offset, ("<strong>%s</strong>" % m_char.c) if m_char.p > p_thresh else '')
+                line_buff.insert(m_indices[-1] + 1 + offset,
+                                 ("<strong>%s</strong>" % m_char.c) if m_char.p > p_thresh else '')
             buff.append("<p>%s</p>" % ''.join(line_buff))
         return tplt.replace('%REPLACE%', '\n'.join(buff))
 

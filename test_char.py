@@ -16,7 +16,7 @@ args = parse.parse_args()
 
 if __name__ == '__main__':
 
-    data = SingleCharData(64, 64, 3990)
+    data = SingleCharData(64, 64)
     data.load_char_map("label_maps/single_pld_3990.json").read(args.src_dir).init_indices()
     main = Main()
     results = main.infer(data, batch_size=64, ckpt_dir=args.ckpt_dir)

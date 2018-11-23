@@ -178,7 +178,7 @@ class QuickSingleCharData(SingleCharData):
                         self.label_map_reverse[next_idx] = lbl
                     self.labels[ptr] = self.label_map[lbl]
                     self.images[ptr] = cv.imdecode(np.fromfile(os.path.join(parent_dir, filename)), 0) \
-                                           .astype(np.float32) \
-                                           .reshape((self.height, self.width, 1)) / 255.
+                                         .astype(np.float32) \
+                                         .reshape((self.height, self.width, 1)) / 255.
                     ptr += 1
                     bar.update(bar.value + 1)

@@ -33,14 +33,14 @@ class Main:
         model.build()
         self.sess.run(tf.global_variables_initializer())
 
-        val_data = Data(args['input_height'], args['input_width'], args['num_class'])
+        val_data = Data(args['input_height'], args['input_width'])
         if args['charmap_exist']:
             val_data.load_char_map(args['charmap_path'])
         val_data.read(args['dir_val'], size=args['val_size'], make_char_map=not args['charmap_exist'])
         if not args['charmap_exist']:
             val_data.dump_char_map(args['charmap_path'])
 
-        train_data = Data(args['input_height'], args['input_width'], args['num_class']) \
+        train_data = Data(args['input_height'], args['input_width']) \
             .load_char_map(args['charmap_path']) \
             .read(args['dir_train'], size=args['train_size'], make_char_map=False) \
             .shuffle_indices()
@@ -123,7 +123,9 @@ class Main:
         while infer_batch is not None:
             infer_images, infer_labels = infer_batch
             infer_feed_dict = self.infer_model.feed(infer_images, infer_labels)
-            classes, p, logits = self.sess.run([self.infer_model.classes, self.infer_model.prob, self.infer_model.logits],
+            classes, p, logits = self.sess.run([self.infer_model.classes,
+                                                self.infer_model.prob,
+                                                self.infer_model.logits],
                                                feed_dict=infer_feed_dict)
             # buff += [(pred, max(logit)) for pred, logit in zip(infer_data.unmap(classes.tolist()), logits)]
             buff += [(pred, max(prob)) for pred, prob in zip(infer_data.unmap(classes.tolist()), p)]

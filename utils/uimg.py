@@ -56,27 +56,6 @@ def erode_img(img, kernal_heght, kernal_width):
     return img
 
 
-def replace_color(img, bgr, old_val_bound, new_val):
-    height, width = img.shape[:2]
-    # 转换HSV
-    # hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    lower = np.array([0, 0, 20])
-    upper = np.array([100, 100, 255])
-    mask_img = cv.inRange(img, lower, upper)
-
-    # 腐蚀膨胀
-    erode_img = cv.erode(mask_img, None, iterations=1)
-    dilate_img = cv.dilate(erode_img, None, iterations=1)
-
-    # 遍历替换
-    for i in range(height):
-        for j in range(width):
-            if dilate_img[i, j] == 255:
-                img[i, j] = (255, 255, 255)
-    save("dst_change_color.jpg", img)
-    return img
-
-
 def fit_resize(img, new_height, new_width):
     """
     > ***ALERT `fit_resize` may return `None` value***, this is because sometimes an image can be fit_resize

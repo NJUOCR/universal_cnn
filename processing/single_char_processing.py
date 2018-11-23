@@ -1,5 +1,7 @@
-import cv2 as cv
 import os
+
+import cv2 as cv
+
 import utils.uimg as uimg
 from data import SingleCharData
 from main import Main
@@ -14,6 +16,7 @@ def process(page_img, draw=False, filename='single_pld_prob_result'):
     4. char segmentation
     5. char image fit-resize
     6. infer
+    :param filename:
     :param draw:
     :param page_img:
     :return:
@@ -57,15 +60,14 @@ def process(page_img, draw=False, filename='single_pld_prob_result'):
     with open('/usr/local/src/data/results/%s.html' % filename, 'w', encoding='utf-8') as f:
         with open('./processing/tplt.html') as tplt:
             formatted = page.format_html(tplt.read())
-        # f.write(page.format_result(with_p=False))
+            # f.write(page.format_result(with_p=False))
             f.write(formatted)
     return page
 
 
 if __name__ == '__main__':
-    path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0029.jpg"
+    path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0228.jpg"
     if os.path.isfile(path):
         page_img_path = path
         # page_img_path = "doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0296.jpg"
-        process(uimg.read(page_img_path, read_flag=1), draw=True, filename='test')
-
+        process(uimg.read(page_img_path, read_flag=1), draw=True, filename=path.replace('/', '-'))
