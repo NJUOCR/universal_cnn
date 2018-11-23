@@ -108,6 +108,17 @@ class TextChar:
     def get_height(self) -> int:
         return self.img.shape[0]
 
+    def get_padding(self, which: str) -> int:
+        assert which in ('left', 'right', 'top', 'bottom')
+        if which == 'left':
+            return self.content_left
+        if which == 'right':
+            return self.get_width() - self.content_right
+        if which == 'top':
+            return self.content_top
+        if which == 'bottom':
+            return self.get_width() - self.content_top
+
     def fit_resize(self, new_height, new_width):
         """
         Resize the char image to fit the tensorflow model input.
@@ -262,8 +273,8 @@ class TextLine:
         Assertion failed, one possible reason: Which char is valid or not is unclear before `set_results()`
         """
         cnt = {}
-        # for h in map(lambda c: round(c.get_content_width() / self.get_line_height(), 1),
-        for h in map(lambda c: self.__relative_width(c.get_width()),
+        for h in map(lambda c: self.__relative_width(c.get_content_width()),
+        # for h in map(lambda c: self.__relative_width(c.get_width()),
                      self.get_chars(only_valid=only_valid_char)):
             if h not in cnt:
                 cnt[h] = 0
@@ -326,25 +337,30 @@ class TextLine:
 
         def merge_score(cur_indices: deque, nbr: TextChar, which: str = ''):
             assert which in ('left', 'right')
-            cur_width = self.__relative_width(sum(map(lambda idx: self.get_chars()[idx].get_width(), cur_indices)))
+            # cur_width = self.__relative_width(sum(map(lambda idx: self.get_chars()[idx].get_width(), cur_indices)))
+            cur_width = sum(map(lambda idx: self.get_char_at(idx).get_width(), cur_indices))
+            cur_width -= self.get_char_at(cur_indices[0]).get_padding('left')
+            cur_width -= self.get_char_at(cur_indices[-1]).get_padding('right')
+            cur_width = self.__relative_width(cur_width)
             if nbr is None or nbr.merged is True:
                 return -1
 
             score = 0
-            add_width = cur_width + self.__relative_width(nbr.get_width())
             if nbr.half() and is_chinese(nbr.c):
                 score += 1
 
             # margin
-            cur_left = self.get_chars()[cur_indices[0]]
-            margin_left = cur_left.content_left + nbr.get_width() - nbr.content_right
-            cur_right = self.get_chars()[cur_indices[-1]]
-            margin_right = cur_right.get_width() - cur_right.content_left + nbr.content_left
+            cur_left = self.get_char_at(cur_indices[0])
+            margin_left = cur_left.get_padding('left') + nbr.get_padding('right')
+            cur_right = self.get_char_at(cur_indices[-1])
+            margin_right = cur_right.get_padding('right') + nbr.get_padding('left')
             distance = margin_right if which == 'right' else margin_left
-            score += 1. / distance
+            score += 1. / (1e-4 + self.__relative_width(distance))
 
             # width
-            score += (1. / (cur_width + self.__relative_width(nbr.get_width())))
+            # score += (1. / (cur_width + self.__relative_width(nbr.get_width())))
+            add_width = cur_width + self.__relative_width(nbr.get_content_width() - nbr.get_padding(which))
+            score += (1. / (1e-4 + add_width))
 
             if add_width / self.std_width > MAX_MERGE_WIDTH:
                 score = -1
@@ -358,14 +374,14 @@ class TextLine:
             if left_score > 0 or right_score > 0:
                 if left_score > right_score:
                     indices.appendleft(indices[0] - 1)
-                    self.get_chars()[indices[0] - 1].merged = True
                 else:
                     indices.append(indices[-1] + 1)
-                    self.get_chars()[indices[-1] + 1].merged = True
                 # fixme python 递归可能会很慢，需要检查这一步是否花费太长时间
                 return best_merge(indices)
             else:
                 # 左右都无法合并
+                for index in indices:
+                    self.get_chars()[index].merged = True
                 return indices
 
         for i, char in enumerate(self.get_chars(only_valid=False)):
@@ -374,6 +390,9 @@ class TextLine:
             if is_chinese(char.c) and char.half():
                 # 预测出是汉字但只占半个字符位置
                 char.draw((-15, -10), (None, -4), (20, 20, 180))
+
+                if self.get_chars()[i].merged is True:
+                    continue
                 merged_indices = best_merge(deque([i]))
                 if len(merged_indices) > 1:
                     self.__merged_from.append(tuple(merged_indices))
@@ -390,7 +409,7 @@ class TextLine:
                     self.get_chars(only_valid=False)[m_char_idx].valid(set_to=False)
                     self.get_chars(only_valid=False)[m_char_idx].draw((0, 3), (None, None), (180, 20, 20))
                 self.get_chars(only_valid=False)[merged_indices[0]].draw((None, None), (0, 2), (180, 20, 30))
-                self.get_chars(only_valid=False)[merged_indices[-1]].draw((None, None), (-3, -1), (180, 20, 30))
+                self.get_chars(only_valid=False)[merged_indices[-1]].draw((None, -20), (-3, -1), (180, 20, 30))
 
     def __relative_width(self, pixel_width):
         return round(pixel_width / self.get_line_height(), 1)
@@ -404,6 +423,9 @@ class TextLine:
         :return:
         """
         return list(filter(lambda char: (not only_valid) or char.valid(), self.split(force=False)))
+
+    def get_char_at(self, i, only_valid=False):
+        return self.get_chars(only_valid=only_valid)[i]
 
     def get_merged_indices(self) -> List[tuple]:
         return self.__merged_from
@@ -533,11 +555,18 @@ class TextPage:
             for char in line.get_chars():
                 line_buff.append(("<span>%s</span>" % char.c) if char.p > p_thresh else "")
             for offset, (m_indices, m_char) in enumerate(zip(line.get_merged_indices(), line.get_merged_chars())):
-                line_buff[m_indices[0] + offset] = '<code class="inline"><del>' + line_buff[m_indices[0] + offset]
-                line_buff[m_indices[-1] + offset] = line_buff[m_indices[-1] + offset] + '</del></code>'
                 line_buff.insert(m_indices[-1] + 1 + offset,
                                  ("<strong>%s</strong>" % m_char.c) if m_char.p > p_thresh else '')
+                line_buff[m_indices[0] + offset] = '<code class="inline"><del>' + line_buff[m_indices[0] + offset]
+                line_buff[m_indices[-1] + offset] = line_buff[m_indices[-1] + offset] + '</del></code>'
             buff.append("<p>%s</p>" % ''.join(line_buff))
+        # for line in self.get_lines(ignore_empty=True):
+        #     line_buff = []
+        #     for char in line.get_chars():
+        #         line_buff.append(('<span>%s</span>' % char.c) if char.p > p_thresh else '')
+        #
+        #     for offset, (m_indices, m_char) in enumerate(zip(line.get_merged_indices(), line.get_merged_chars())):
+
         return tplt.replace('%REPLACE%', '\n'.join(buff))
 
     def filter_by_p(self, p_thresh=DEFAULT_NOISE_P_THRESH):
