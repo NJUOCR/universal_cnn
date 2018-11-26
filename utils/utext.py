@@ -532,7 +532,7 @@ class TextPage:
             for char in line.get_chars():
                 line_buff.append(char.c if char.p > p_thresh else '')
             for m_indices, m_char in zip(line.get_merged_indices(), line.get_merged_chars()):
-                line_buff[m_indices[0]:m_indices[-1]] = ''
+                line_buff[m_indices[0]:m_indices[-1]] = ['' for _ in m_indices[:-1]]
                 line_buff[m_indices[-1]] = m_char.c if m_char.p > p_thresh else ''
             buff.append(''.join(line_buff))
         return '\n'.join(buff)
