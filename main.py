@@ -6,6 +6,8 @@ from args import args
 from data import SingleCharData as Data
 # from data import RotationData as Data
 from models.single_char_model import Model
+
+
 # from models.punctuation_letter_digit_model import Model
 
 
@@ -99,21 +101,23 @@ class Main:
                     cost_between_val = samples_between_val = 0
         self.save(step)
 
-    def infer(self, infer_data=None, input_width=None, input_height=None,
-              num_class=None, batch_size=None, ckpt_dir=None, dump=False):
+    def load(self, input_width=None, input_height=None, num_class=None, ckpt_dir=None):
         input_width = input_width or args['input_width']
         input_height = input_height or args['input_height']
         num_class = num_class or args['num_class']
+        if self.infer_model is None:
+            self.infer_model = Model(input_width, input_height, num_class, 'infer')
+            self.infer_model.build()
+            self.restore(ckpt_dir=ckpt_dir)
+        return self
+
+    def infer(self, infer_data=None, batch_size=None, dump=False):
         batch_size = batch_size or args['batch_size']
         infer_data = infer_data or Data(args['input_height'], args['input_width']) \
             .load_char_map(args['charmap_path']) \
             .read(args['dir_infer']) \
             .init_indices()
 
-        if self.infer_model is None:
-            self.infer_model = Model(input_width, input_height, num_class, 'infer')
-            self.infer_model.build()
-            self.restore(ckpt_dir=ckpt_dir)
         print("start inferring")
 
         infer_batch = infer_data.next_batch(batch_size)
