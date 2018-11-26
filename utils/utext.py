@@ -274,7 +274,7 @@ class TextLine:
         """
         cnt = {}
         for h in map(lambda c: self.__relative_width(c.get_content_width()),
-        # for h in map(lambda c: self.__relative_width(c.get_width()),
+                     # for h in map(lambda c: self.__relative_width(c.get_width()),
                      self.get_chars(only_valid=only_valid_char)):
             if h not in cnt:
                 cnt[h] = 0
@@ -478,7 +478,7 @@ class TextPage:
             for line_id, (upper, lower) in enumerate(zip(line_splitters, line_splitters[1:])):
                 line_img = self.img[upper:lower, :]
                 line_drawing_copy = self.drawing_copy[upper:lower, :] if self.drawing_copy is not None else None
-                text_line = TextLine(line_img, line_id,  drawing_copy=line_drawing_copy)
+                text_line = TextLine(line_img, line_id, drawing_copy=line_drawing_copy)
                 self.__text_lines.append(text_line)
         return self.__text_lines
 
@@ -525,15 +525,17 @@ class TextPage:
                 char.set_result(c, p=p)
                 ptr += 1
 
-    def format_result(self, with_p=False, p_thresh=DEFAULT_NOISE_P_THRESH) -> str:
+    def format_result(self, p_thresh=DEFAULT_NOISE_P_THRESH) -> str:
         buff = []
         for line in self.get_lines(ignore_empty=True):
+            line_buff = []
             for char in line.get_chars():
-                if char.p < p_thresh:
-                    continue
-                buff.append(str(char.c) if not with_p else str((char.c, char.p)))
-            buff.append('\n')
-        return ''.join(buff)
+                line_buff.append(char.c if char.p > p_thresh else '')
+            for m_indices, m_char in zip(line.get_merged_indices(), line.get_merged_chars()):
+                line_buff[m_indices[0]:m_indices[-1]] = ''
+                line_buff[m_indices[-1]] = m_char.c if m_char.p > p_thresh else ''
+            buff.append(''.join(line_buff))
+        return '\n'.join(buff)
 
     def format_markdown(self, p_thresh=DEFAULT_NOISE_P_THRESH):
         buff = []
@@ -560,13 +562,6 @@ class TextPage:
                 line_buff[m_indices[0] + offset] = '<code class="inline"><del>' + line_buff[m_indices[0] + offset]
                 line_buff[m_indices[-1] + offset] = line_buff[m_indices[-1] + offset] + '</del></code>'
             buff.append("<p>%s</p>" % ''.join(line_buff))
-        # for line in self.get_lines(ignore_empty=True):
-        #     line_buff = []
-        #     for char in line.get_chars():
-        #         line_buff.append(('<span>%s</span>' % char.c) if char.p > p_thresh else '')
-        #
-        #     for offset, (m_indices, m_char) in enumerate(zip(line.get_merged_indices(), line.get_merged_chars())):
-
         return tplt.replace('%REPLACE%', '\n'.join(buff))
 
     def filter_by_p(self, p_thresh=DEFAULT_NOISE_P_THRESH):
