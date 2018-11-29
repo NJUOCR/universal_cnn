@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debugger</title>
+    <link rel="stylesheet" href="/static/lib/bootstrap/css/bootstrap.css">
+{#    <script src="/static/lib/bootstrap/js/bootstrap.js"></script>#}
+    <script src="/static/lib/vue.js"></script>
+</head>
+<style>
+    body{
+        height: 100vh;
+        margin: 0;
+    }
+
+    #input{
+        width: 70%;
+        margin: 0 auto;
+
+    }
+
+    .middle{
+        display: flex;
+        justify-content: center;
+    }
+    .middle a{
+        margin: 0 5px;
+    }
+</style>
+<body>
+<div id="container">
+
+    <div id="input" class="input-group">
+        <input type="text" class="form-control" placeholder="位于服务器上的文件路径" v-model="path">
+        <span class="input-group-btn">
+            <button @click="convert()" class="btn btn-primary">GO</button>
+        </span>
+    </div>
+    <pre v-text="result">
+
+    </pre>
+    <div class="middle">
+        <a target="_blank" :href="auxiliaryImg" class="btn btn-lg btn-default">辅助图片</a>
+        <a target="_blank" :href="auxiliaryTxt" class="btn btn-lg btn-default">辅助文字</a>
+    </div>
+</div>
+
+<script>
+    let controller = new Vue({
+        el: "#container",
+        data: {
+            path: '',
+            result: '',
+            auxiliaryImg: '',
+            auxiliaryTxt: '',
+        },
+        methods: {
+            convert: function () {
+                window.fetch(`/?auxiliary=True&path=${this.path.trim()}`).then(res => {
+                    if(res.ok){
+                        res.json().then(j => {
+                            console.log(j);
+                            this.result = j['txt'];
+                            this.auxiliaryImg = j['img'];
+                            this.auxiliaryTxt = j['html']
+                        })
+                    }
+                })
+            }
+        }
+    })
+</script>
+</body>
+</html>
