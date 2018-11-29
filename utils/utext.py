@@ -39,6 +39,7 @@ class TextChar:
 
         # The predication for this char is possibly wrong. If `__valid is False`, this char has been merged.
         self.__valid = False
+        self.__location = None
 
         self.__box_content()
 
@@ -152,10 +153,16 @@ class TextChar:
         self.p = round(p, 2)
         self.valid(set_to=True)
 
-    def valid(self, set_to=None):
+    def valid(self, set_to: bool = None) -> bool:
         if set_to in (True, False):
             self.__valid = set_to
         return self.__valid
+
+    def location(self, set_to: str = None) -> str:
+        assert set_to in (None, 'roof', 'floor')
+        if set_to in ('roof', 'floor'):
+            self.__location = set_to
+        return self.__location
 
     def draw(self, y: tuple, x: tuple, color: tuple):
         if self.drawing_copy is not None:
@@ -414,15 +421,24 @@ class TextLine:
     def __relative_width(self, pixel_width):
         return round(pixel_width / self.get_line_height(), 1)
 
-    def get_chars(self, only_valid=False):
+    def get_chars(self, only_valid: bool = False, replace_merged: bool = False):
         """
         Get char objects.
         > ** ATTENTION: merged chars are excluded**
         > To get merged chars, use `get_merged_chars()`
+        :param replace_merged:
         :param only_valid:
         :return:
         """
-        return list(filter(lambda char: (not only_valid) or char.valid(), self.split(force=False)))
+        if replace_merged is True:
+            whole = self.split(force=False).copy()
+            for indices, m_char in zip(self.get_merged_indices(), self.get_merged_chars()):
+                for idx in indices:
+                    whole[idx] = None
+                whole[indices[0]] = m_char
+            return list(filter(lambda char: char is not None and ((not only_valid) or char.valid()), whole))
+        else:
+            return list(filter(lambda char: (not only_valid) or char.valid(), self.split(force=False)))
 
     def get_char_at(self, i, only_valid=False):
         return self.get_chars(only_valid=only_valid)[i]
@@ -524,6 +540,16 @@ class TextPage:
                 c, p = results[ptr]
                 char.set_result(c, p=p)
                 ptr += 1
+
+    def iterate(self, window_size):
+        assert window_size % 2 == 1
+        r = window_size // 2
+        compressed = [None for _ in r]
+        for line in self.get_lines(ignore_empty=True):
+            compressed += line.get_chars(only_valid=False, replace_merged=True)
+        compressed += [None for _ in r]
+        for i in range(r, len(compressed) - r):
+            yield compressed[i - r: i + r + 1]
 
     def format_result(self, p_thresh=DEFAULT_NOISE_P_THRESH) -> str:
         buff = []

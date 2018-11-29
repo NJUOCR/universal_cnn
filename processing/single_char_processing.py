@@ -1,8 +1,7 @@
 import threading
-
 import cv2 as cv
-
 import utils.uimg as uimg
+import processing.rectification as rct
 from data import SingleCharData
 from main import Main
 from processing.tplt import tplt
@@ -25,14 +24,14 @@ class Processor(object):
                     Processor._instance = object.__new__(cls)
         return Processor._instance
 
-    def process(self, page_path: str, p_thresh: float, auxiliary_img, auxiliary_html):
+    def process(self, page_path: str, p_thresh: float, auxiliary_img: str, auxiliary_html: str):
         print(page_path)
         page = TextPage(uimg.read(page_path, 1), 0, drawing_copy=None)
 
         # 1.
         page.auto_bin()
 
-        if auxiliary_img is not False:
+        if auxiliary_img is not None:
             page.drawing_copy = cv.cvtColor(page.img.copy(), cv.COLOR_GRAY2BGR)
 
         # 2.
@@ -50,7 +49,7 @@ class Processor(object):
         page.filter_by_p(p_thresh=p_thresh)
         for line in page.get_lines(ignore_empty=True):
             line.mark_half()
-            # line.calculate_meanline_regression()
+            line.calculate_meanline_regression()
             line.merge_components()
 
         # 8.
@@ -58,10 +57,13 @@ class Processor(object):
         results2 = self.main.infer(infer_data=self.data, batch_size=self.batch_size)
         page.set_result_2(results2)
 
-        if auxiliary_img is not False:
+        rct.rectify_by_location(page.iterate(1))
+        rct.rectify_3(page.iterate(3))
+
+        if auxiliary_img is not None:
             uimg.save(auxiliary_img, page.drawing_copy)
 
-        if auxiliary_html is not False:
+        if auxiliary_html is not None:
             with open(auxiliary_html, 'w', encoding='utf-8') as f:
                 f.write(page.format_html(tplt))
 
@@ -71,8 +73,9 @@ class Processor(object):
 if __name__ == '__main__':
     path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0228.jpg"
 
-    proc = Processor("/usr/local/src/data/stage2/all/all.json",
-                     "/usr/local/src/data/stage2/all/aliasmap.json",
-                     '/usr/local/src/data/stage2/all/ckpts',
-                     64, 64, 4184, 64)
-    proc.process(path, 0.9, '/usr/local/src/data/results/auxiliary.png', '/usr/local/src/data/results/auxiliary.html')
+    proc = Processor("/usr/local/src/data/stage2/all_4190/all_4190.json",
+                     "/usr/local/src/data/stage2/all_4190/aliasmap.json",
+                     '/usr/local/src/data/stage2/all_4190/ckpts',
+                     64, 64, 4190, 64)
+    res = proc.process(path, 0.9, '/usr/local/src/data/results/auxiliary.png', '/usr/local/src/data/results/auxiliary.html')
+    print(res)
