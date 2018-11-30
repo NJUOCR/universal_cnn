@@ -42,7 +42,8 @@ class TextChar:
         self.__valid = False
         self.__location = None
 
-        self.__box_content()
+        if char_img is not None:
+            self.__box_content()
 
     def __box_content(self):
         """
@@ -577,10 +578,10 @@ class TextPage:
     def iterate(self, window_size):
         assert window_size % 2 == 1
         r = window_size // 2
-        compressed = [None for _ in range(r)]
+        compressed = [TextChar(None) for _ in range(r)]
         for line in self.get_lines(ignore_empty=True):
             compressed += line.get_chars(only_valid=False, replace_merged=True)
-        compressed += [None for _ in range(r)]
+        compressed += [TextChar(None) for _ in range(r)]
         for i in range(r, len(compressed) - r):
             yield compressed[i - r: i + r + 1]
 
