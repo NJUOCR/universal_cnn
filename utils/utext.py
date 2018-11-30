@@ -35,7 +35,8 @@ class TextChar:
         self.merged = False
 
         self.is_half = None
-        self.c, self.p = None, 0
+        self._c, self.p = None, 0
+        self.logs = []
 
         # The predication for this char is possibly wrong. If `__valid is False`, this char has been merged.
         self.__valid = False
@@ -149,7 +150,8 @@ class TextChar:
         return self.is_half
 
     def set_result(self, c, p=0):
-        self.c = c
+        # self.c = c
+        self.set_content_text(c, msg='prediction result')
         self.p = round(p, 2)
         self.valid(set_to=True)
 
@@ -167,6 +169,18 @@ class TextChar:
     def draw(self, y: tuple, x: tuple, color: tuple):
         if self.drawing_copy is not None:
             self.drawing_copy[y[0]:y[1], x[0]:x[1]] = color
+
+    def set_content_text(self, c, msg='none'):
+        self.logs.append({
+            'msg': msg,
+            'last': self._c,
+            'current': c
+        })
+        self._c = c
+
+    @property
+    def c(self):
+        return self._c
 
 
 class TextLine:
@@ -331,6 +345,22 @@ class TextLine:
                 c.draw((-5, -1), (5, -5), (20, 200, 20))
         return self
 
+    def mark_location(self):
+        """
+        Newly merged chars would not be marked, because regression line is computed by
+        the first-time-splited chars
+        :return:
+        """
+        if self.a is None or self.b is None:
+            self.calculate_meanline_regression()
+
+        offset = 0
+        for char in self.get_chars():
+            center_y, center_x = char.get_content_center()
+            y_ = self.regression_fn(center_x + offset)
+            char.location(set_to='roof' if center_y < y_ else 'floor')
+            offset += char.get_width()
+
     def merge_components(self):
         """
         **precondition**: `TextPage.set_result()` has been invoked, and predication(inferring) results have set
@@ -398,9 +428,10 @@ class TextLine:
                 # 预测出是汉字但只占半个字符位置
                 char.draw((-15, -10), (None, -4), (20, 20, 180))
 
-                if self.get_chars()[i].merged is True:
+                if self.get_char_at(i).merged is True:
                     continue
                 merged_indices = best_merge(deque([i]))
+
                 if len(merged_indices) > 1:
                     self.__merged_from.append(tuple(merged_indices))
                     merged_img = np.concatenate(
@@ -412,11 +443,13 @@ class TextLine:
                     )
                     self.__merged_char.append(TextChar(merged_img))
 
-                for m_char_idx in merged_indices:
-                    self.get_chars(only_valid=False)[m_char_idx].valid(set_to=False)
-                    self.get_chars(only_valid=False)[m_char_idx].draw((0, 3), (None, None), (180, 20, 20))
-                self.get_chars(only_valid=False)[merged_indices[0]].draw((None, None), (0, 2), (180, 20, 30))
-                self.get_chars(only_valid=False)[merged_indices[-1]].draw((None, -20), (-3, -1), (180, 20, 30))
+                    for m_char_idx in merged_indices:
+                        self.get_chars(only_valid=False)[m_char_idx].valid(set_to=False)
+                        self.get_chars(only_valid=False)[m_char_idx].draw((0, 3), (None, None), (180, 20, 20))
+                    self.get_chars(only_valid=False)[merged_indices[0]].draw((None, None), (0, 2), (180, 20, 30))
+                    self.get_chars(only_valid=False)[merged_indices[-1]].draw((None, -20), (-3, -1), (180, 20, 30))
+                else:
+                    self.get_char_at(i).merged = False
 
     def __relative_width(self, pixel_width):
         return round(pixel_width / self.get_line_height(), 1)
@@ -544,10 +577,10 @@ class TextPage:
     def iterate(self, window_size):
         assert window_size % 2 == 1
         r = window_size // 2
-        compressed = [None for _ in r]
+        compressed = [None for _ in range(r)]
         for line in self.get_lines(ignore_empty=True):
             compressed += line.get_chars(only_valid=False, replace_merged=True)
-        compressed += [None for _ in r]
+        compressed += [None for _ in range(r)]
         for i in range(r, len(compressed) - r):
             yield compressed[i - r: i + r + 1]
 
@@ -562,6 +595,29 @@ class TextPage:
                 line_buff[m_indices[-1]] = m_char.c if m_char.p > p_thresh else ''
             buff.append(''.join(line_buff))
         return '\n'.join(buff)
+
+    def format_json(self, p_thresh=DEFAULT_NOISE_P_THRESH) -> list:
+        buff = []
+        for line in self.get_lines(ignore_empty=True):
+            line_buff = []
+            for char in line.get_chars():
+                line_buff.append({
+                    'c': char.c,
+                    'logs': char.logs,
+                    'merged': char.merged,
+                    'p': '%.1f' % char.p,
+                    'under_thresh': bool(char.p < p_thresh)
+                })
+            for offset, (m_indices, m_char) in enumerate(zip(line.get_merged_indices(), line.get_merged_chars())):
+                line_buff.insert(m_indices[-1] + 1 + offset, {
+                    'c': m_char.c,
+                    'logs': m_char.logs,
+                    'merged': False,
+                    'p': '%.1f' % m_char.p,
+                    'under_thresh': bool(m_char.p < p_thresh)
+                })
+            buff.append(line_buff)
+        return buff
 
     def format_markdown(self, p_thresh=DEFAULT_NOISE_P_THRESH):
         buff = []
@@ -595,3 +651,7 @@ class TextPage:
             for char in line.get_chars():
                 if char.p < p_thresh:
                     char.valid(set_to=False)
+
+    def mark_char_location(self):
+        for line in self.get_lines(ignore_empty=True):
+            line.mark_location()

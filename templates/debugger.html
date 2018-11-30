@@ -4,68 +4,162 @@
     <meta charset="UTF-8">
     <title>Debugger</title>
     <link rel="stylesheet" href="/static/lib/bootstrap/css/bootstrap.css">
-{#    <script src="/static/lib/bootstrap/js/bootstrap.js"></script>#}
     <script src="/static/lib/vue.js"></script>
 </head>
 <style>
-    body{
+    body {
         height: 100vh;
         margin: 0;
     }
 
-    #input{
-        width: 70%;
-        margin: 0 auto;
-
+    p {
+        margin: 0;
     }
 
-    .middle{
+    table {
+        font-size: 1.5em;
+    }
+
+    .main {
+        width: 60%;
+        position: absolute;
+        top: 8em;
+        overflow: auto;
+    }
+
+    .aside {
+        width: 40%;
+        position: fixed;
+        right: 0;
+    }
+
+    #input {
+        width: 60%;
+        margin: 0 auto;
+        position: fixed;
+        padding: 0 5%;
+        background-color: white;
+        z-index: 100;
+    }
+
+    .middle {
         display: flex;
         justify-content: center;
     }
-    .middle a{
+
+    .middle a {
         margin: 0 5px;
+    }
+
+    .char {
+        background-color: #e5e1e1;
+        margin: 0 1px;
+        font-size: 1.4em;
+        padding: 0 2px;
+    }
+
+    .merged {
+        font-size: 0.6em;
+        margin: 0;
+        text-decoration: line-through;
+        color: #800a0d;
     }
 </style>
 <body>
 <div id="container">
-
-    <div id="input" class="input-group">
-        <input type="text" class="form-control" placeholder="位于服务器上的文件路径" v-model="path">
-        <span class="input-group-btn">
+    <div id="input">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="位于服务器上的文件路径" v-model="path">
+            <span class="input-group-btn">
             <button @click="convert()" class="btn btn-primary">GO</button>
         </span>
+        </div>
+        <div class="middle">
+            <a target="_blank" :href="auxiliaryImg" class="btn btn-lg btn-default">辅助图片</a>
+            <a target="_blank" :href="auxiliaryTxt" class="btn btn-lg btn-default">辅助文字</a>
+        </div>
     </div>
-    <pre v-text="result">
-
-    </pre>
-    <div class="middle">
-        <a target="_blank" :href="auxiliaryImg" class="btn btn-lg btn-default">辅助图片</a>
-        <a target="_blank" :href="auxiliaryTxt" class="btn btn-lg btn-default">辅助文字</a>
+    <div class="main">
+        <p v-for="(line, lineIdx) in result">
+            <span v-for="(obj, charIdx) in line" :class="['char', {merged: obj.merged}]"
+                  v-text="obj.c" data-line-id="lineIdx" data-char-id="charIdx"
+                  @click="showLogs(lineIdx, charIdx)">
+            </span>
+        </p>
     </div>
+    <aside class="aside">
+        <h1>
+            {{ detail.c }}
+            <span class="badge">{{ detail.p }}</span>
+            <span v-if="detail.merged" class="label label-warning">已合并</span>
+            <span v-if="detail.under_thresh" class="label label-danger">弱预测</span>
+        </h1>
+        <!--<ol>
+                <li v-for="log in detail.logs">
+                    <span>{{ log.last }}</span>
+                    <span class="glyphicon glyphicon-arrow-right"></span>
+                    <span>{{ log.current }}</span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <span>{{ log.msg }}</span>
+                </li>
+            </ol>-->
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>修正</th>
+                <th>备注</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="log in detail.logs">
+                <td>
+                    <span>{{ log.last }}</span>
+                    <span class="glyphicon glyphicon-arrow-right"></span>
+                    <span>{{ log.current }}</span>
+                </td>
+                <td>
+                    {{ log.msg }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </aside>
 </div>
 
 <script>
     let controller = new Vue({
         el: "#container",
         data: {
-            path: '',
+            path: '/usr/local/src/remote/universal_cnn/doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0014.jpg',
             result: '',
             auxiliaryImg: '',
             auxiliaryTxt: '',
+
+            detail: {
+                c: '点击文字显示历史纪录',
+                p: '',
+                merged: false,
+                logs: [],
+                under_thresh: false
+            }
         },
         methods: {
             convert: function () {
-                window.fetch(`/?auxiliary=True&path=${this.path.trim()}`).then(res => {
-                    if(res.ok){
+                window.fetch(`/?logs=True&auxiliary=True&path=${this.path.trim()}`).then(res => {
+                    if (res.ok) {
                         res.json().then(j => {
                             console.log(j);
-                            this.result = j['txt'];
+                            this.result = j['rs'];
                             this.auxiliaryImg = j['img'];
                             this.auxiliaryTxt = j['html']
                         })
                     }
                 })
+            },
+
+            showLogs: function (lineIdx, charIdx) {
+                console.log(this.result[lineIdx][charIdx]);
+                this.detail = this.result[lineIdx][charIdx];
             }
         }
     })

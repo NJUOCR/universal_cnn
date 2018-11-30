@@ -24,7 +24,7 @@ class Processor(object):
                     Processor._instance = object.__new__(cls)
         return Processor._instance
 
-    def process(self, page_path: str, p_thresh: float, auxiliary_img: str, auxiliary_html: str):
+    def _process(self, page_path: str, p_thresh: float, auxiliary_img: str, auxiliary_html: str)->TextPage:
         print(page_path)
         page = TextPage(uimg.read(page_path, 1), 0, drawing_copy=None)
 
@@ -49,13 +49,14 @@ class Processor(object):
         page.filter_by_p(p_thresh=p_thresh)
         for line in page.get_lines(ignore_empty=True):
             line.mark_half()
-            line.calculate_meanline_regression()
+            # line.calculate_meanline_regression()
             line.merge_components()
 
         # 8.
         self.data.set_images(page.make_infer_input_2()).init_indices()
         results2 = self.main.infer(infer_data=self.data, batch_size=self.batch_size)
         page.set_result_2(results2)
+        page.mark_char_location()
 
         rct.rectify_by_location(page.iterate(1))
         rct.rectify_3(page.iterate(3))
@@ -67,8 +68,15 @@ class Processor(object):
             with open(auxiliary_html, 'w', encoding='utf-8') as f:
                 f.write(page.format_html(tplt))
 
-        return page.format_result(p_thresh=p_thresh)
+        return page
 
+    def get_json_result(self, page_path: str, p_thresh: float, auxiliary_img: str, auxiliary_html: str):
+        page = self._process(page_path, p_thresh, auxiliary_img, auxiliary_html)
+        return page.format_json(p_thresh=p_thresh)
+
+    def get_text_result(self, page_path: str, p_thresh: float, auxiliary_img: str, auxiliary_html: str):
+        page = self._process(page_path, p_thresh, auxiliary_img, auxiliary_html)
+        return page.format_result(p_thresh=p_thresh)
 
 if __name__ == '__main__':
     path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0228.jpg"

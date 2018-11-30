@@ -1,7 +1,8 @@
-import os
 import json
+import os
+
 import yaml
-from flask import Flask, request, make_response, jsonify, render_template
+from flask import Flask, request, make_response, jsonify, render_template, Response, send_file
 
 from processing.single_char_processing import Processor
 
@@ -37,21 +38,35 @@ def recognize_file():
     args = request.args
     path = args['path']
     auxiliary = bool(args['auxiliary'])
+    with_log = bool(args['logs'])
     if path[-4:] not in ('.jpg', '.png'):
         return make_response(jsonify({'error': 'only jpg, png files are supported'}, 415))
     if not os.path.isfile(path):
         return make_response(jsonify({'error': 'target file not found on server', 'target-file': path}, 404))
 
-    txt = proc.process(path, p_thresh=CONF['p_thresh'],
-                       auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
-                       auxiliary_html='./static/auxiliary.html' if auxiliary else None
-                       )
-    return txt if not auxiliary else jsonify(txt=txt, img='/static/auxiliary.jpg', html='/static/auxiliary.html')
+    if not with_log:
+        rs = proc.get_text_result(path, p_thresh=CONF['p_thresh'],
+                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
+                                  auxiliary_html='./static/auxiliary.html' if auxiliary else None
+                                  )
+    else:
+        rs = proc.get_json_result(path, p_thresh=CONF['p_thresh'],
+                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
+                                  auxiliary_html='./static/auxiliary.html' if auxiliary else None
+                                  )
+    return rs if not auxiliary else Response(
+        json.dumps({
+            'rs': rs,
+            'img': '/static/auxiliary.jpg',
+            'html': '/static/auxiliary.html'
+        }),
+        mimetype='application/json'
+    )
 
 
 @app.route("/debugger")
 def debugger():
-    return render_template('debugger.html')
+    return send_file('templates/debugger.html')
 
 
 if __name__ == '__main__':

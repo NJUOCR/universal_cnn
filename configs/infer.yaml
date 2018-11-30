@@ -1,0 +1,13 @@
+charmap_path: /usr/local/src/data/stage2/all_4190/all_4190.json
+aliasmap_path: /usr/local/src/data/stage2/all_4190/aliasmap.json
+
+ckpt_dir: /usr/local/src/data/stage2/all_4190/ckpts
+
+input_width: 64
+input_height: 64
+num_class: 4190
+
+p_thresh: 0.5
+
+# save auxiliary image to this path, set it to false if not needed
+auxiliary_output: /usr/local/src/data/results/test.png
