@@ -46,19 +46,14 @@ def recognize_file():
 
     if not with_log:
         rs = proc.get_text_result(path, p_thresh=CONF['p_thresh'],
-                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
-                                  auxiliary_html='./static/auxiliary.html' if auxiliary else None
-                                  )
+                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None)
     else:
         rs = proc.get_json_result(path, p_thresh=CONF['p_thresh'],
-                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
-                                  auxiliary_html='./static/auxiliary.html' if auxiliary else None
-                                  )
+                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None)
     return rs if not auxiliary else Response(
         json.dumps({
             'rs': rs,
-            'img': '/static/auxiliary.jpg',
-            'html': '/static/auxiliary.html'
+            'img': '/static/auxiliary.jpg'
         }),
         mimetype='application/json'
     )

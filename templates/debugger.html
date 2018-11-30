@@ -17,13 +17,14 @@
     }
 
     table {
-        font-size: 1.5em;
+        font-size: 1.3em;
     }
 
     .main {
         width: 60%;
         position: absolute;
-        top: 8em;
+        top: 4em;
+        left: 0.5em;
         overflow: auto;
     }
 
@@ -37,8 +38,8 @@
         width: 60%;
         margin: 0 auto;
         position: fixed;
-        padding: 0 5%;
-        background-color: white;
+        padding: 0.5em 2%;
+        background-color: rgba(255, 255, 255, 0.8);
         z-index: 100;
     }
 
@@ -69,14 +70,12 @@
 <div id="container">
     <div id="input">
         <div class="input-group">
-            <input type="text" class="form-control" placeholder="位于服务器上的文件路径" v-model="path">
+            <span type="text" class="input-group-addon">{{ rootPath }}</span>
+            <input type="text" class="form-control" placeholder="相对路径" v-model="subPath">
             <span class="input-group-btn">
-            <button @click="convert()" class="btn btn-primary">GO</button>
-        </span>
-        </div>
-        <div class="middle">
-            <a target="_blank" :href="auxiliaryImg" class="btn btn-lg btn-default">辅助图片</a>
-            <a target="_blank" :href="auxiliaryTxt" class="btn btn-lg btn-default">辅助文字</a>
+                <button @click="convert()" class="btn btn-primary">GO</button>
+                <a :class="[{disabled: auxiliaryImg == ''}]" target="_blank" :href="auxiliaryImg" class="btn btn-default">辅助图片</a>
+            </span>
         </div>
     </div>
     <div class="main">
@@ -130,10 +129,10 @@
     let controller = new Vue({
         el: "#container",
         data: {
-            path: '/usr/local/src/remote/universal_cnn/doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0014.jpg',
+            rootPath: '/usr/local/src/remote/universal_cnn/',
+            subPath: 'doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0014.jpg',
             result: '',
             auxiliaryImg: '',
-            auxiliaryTxt: '',
 
             detail: {
                 c: '点击文字显示历史纪录',
@@ -145,13 +144,13 @@
         },
         methods: {
             convert: function () {
-                window.fetch(`/?logs=True&auxiliary=True&path=${this.path.trim()}`).then(res => {
+                let path = this.rootPath + this.subPath;
+                window.fetch(`/?logs=True&auxiliary=True&path=${path.trim()}`).then(res => {
                     if (res.ok) {
                         res.json().then(j => {
                             console.log(j);
                             this.result = j['rs'];
                             this.auxiliaryImg = j['img'];
-                            this.auxiliaryTxt = j['html']
                         })
                     }
                 })

@@ -1,10 +1,11 @@
 import threading
+
 import cv2 as cv
-import utils.uimg as uimg
+
 import processing.rectification as rct
+import utils.uimg as uimg
 from data import SingleCharData
 from main import Main
-from processing.tplt import tplt
 from utils.utext import TextPage
 
 
@@ -24,7 +25,7 @@ class Processor(object):
                     Processor._instance = object.__new__(cls)
         return Processor._instance
 
-    def _process(self, page_path: str, p_thresh: float, auxiliary_img: str, auxiliary_html: str)->TextPage:
+    def _process(self, page_path: str, p_thresh: float, auxiliary_img: str) -> TextPage:
         print(page_path)
         page = TextPage(uimg.read(page_path, 1), 0, drawing_copy=None)
 
@@ -64,19 +65,20 @@ class Processor(object):
         if auxiliary_img is not None:
             uimg.save(auxiliary_img, page.drawing_copy)
 
-        if auxiliary_html is not None:
-            with open(auxiliary_html, 'w', encoding='utf-8') as f:
-                f.write(page.format_html(tplt))
+        # if auxiliary_html is not None:
+        #     with open(auxiliary_html, 'w', encoding='utf-8') as f:
+        #         f.write(page.format_html(tplt))
 
         return page
 
-    def get_json_result(self, page_path: str, p_thresh: float, auxiliary_img: str, auxiliary_html: str):
-        page = self._process(page_path, p_thresh, auxiliary_img, auxiliary_html)
+    def get_json_result(self, page_path: str, p_thresh: float, auxiliary_img: str):
+        page = self._process(page_path, p_thresh, auxiliary_img)
         return page.format_json(p_thresh=p_thresh)
 
-    def get_text_result(self, page_path: str, p_thresh: float, auxiliary_img: str, auxiliary_html: str):
-        page = self._process(page_path, p_thresh, auxiliary_img, auxiliary_html)
+    def get_text_result(self, page_path: str, p_thresh: float, auxiliary_img: str):
+        page = self._process(page_path, p_thresh, auxiliary_img)
         return page.format_result(p_thresh=p_thresh)
+
 
 if __name__ == '__main__':
     path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0228.jpg"
@@ -85,5 +87,5 @@ if __name__ == '__main__':
                      "/usr/local/src/data/stage2/all_4190/aliasmap.json",
                      '/usr/local/src/data/stage2/all_4190/ckpts',
                      64, 64, 4190, 64)
-    res = proc.process(path, 0.9, '/usr/local/src/data/results/auxiliary.png', '/usr/local/src/data/results/auxiliary.html')
+    res = proc.get_text_result(path, 0.9, '/usr/local/src/data/results/auxiliary.png')
     print(res)
