@@ -40,14 +40,23 @@ def auto_bin(img, otsu=False):
     """
     # 读取图像，并转为灰度图
     img_grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY) if len(img.shape) == 3 and img.shape[2] == 3 else img
-
     if otsu:
         return cv.threshold(img_grey, 0, 255, cv.THRESH_BINARY+cv.THRESH_OTSU)[1]
     # 自适应二值化
     img_at_mean = cv.adaptiveThreshold(img_grey, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 47, 10)
-
     return img_at_mean
 
+
+# 固定阈值二值化
+def thresh_bin(img, minv=150, maxv=255, type=cv.THRESH_BINARY_INV):
+    img_grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY) if len(img.shape) == 3 and img.shape[2] == 3 else img
+    _, threshold = cv.threshold(img_grey, minv, maxv, type)
+    return threshold
+
+# 边缘检测
+def canny_bin(img, minv=50, maxv=150, apertureSize=3):
+    img_canny = cv.cv.Canny(img, minv, maxv, apertureSize)
+    return img_canny
 
 # 腐蚀
 def erode_img(img, kernal_heght, kernal_width):
