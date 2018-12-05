@@ -112,9 +112,9 @@
             <tbody>
             <tr v-for="log in detail.logs">
                 <td>
-                    <span>{{ log.last }}</span>
+                    <code>{{ log.last }}</code>
                     <span class="glyphicon glyphicon-arrow-right"></span>
-                    <span>{{ log.current }}</span>
+                    <code>{{ log.current }}</code>
                 </td>
                 <td>
                     {{ log.msg }}
@@ -129,7 +129,7 @@
     let controller = new Vue({
         el: "#container",
         data: {
-            rootPath: '/usr/local/src/remote/universal_cnn/',
+            rootPath: './',
             subPath: 'doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0014.jpg',
             result: '',
             auxiliaryImg: '',

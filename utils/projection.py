@@ -123,7 +123,8 @@ def get_splitter(sum_array):
 def get_splitter_end(sum_array, default_end=True):
     """
     Every start of a character is a splitter
-    :param sum_array:
+    :param default_end: add a splitter at the end of content
+    :param sum_array: the projective histogram array
     :return:
     """
     splitters = []
@@ -148,6 +149,7 @@ def draw_images(sum_array):
 
 
 def extract_peek_array(array_vals, minimun_val=20, minimum_range=2):
+    # fixme 是否可以删除该函数
     start_i = None
     end_i = None
     peek_ranges = []

@@ -19,10 +19,6 @@ CONF = {**{
     'batch_size': 64,
     'p_thresh': 0.8
 }, **conf_args}
-# proc = Processor("/usr/local/src/data/stage2/all/all.json",
-#                  "/usr/local/src/data/stage2/all/aliasmap.json",
-#                  '/usr/local/src/data/stage2/all/ckpts',
-#                  64, 64, 4184, 64)
 print(json.dumps(CONF, ensure_ascii=False, indent=2))
 proc = Processor(CONF['charmap_path'], CONF['aliasmap_path'], CONF['ckpt_dir'],
                  CONF['input_height'], CONF['input_width'], CONF['num_class'], CONF['batch_size'])

@@ -36,7 +36,8 @@ class Processor(object):
             page.drawing_copy = cv.cvtColor(page.img.copy(), cv.COLOR_GRAY2BGR)
 
         # 2.
-        page.fix_orientation()
+        # fixme 低分辨率旋转校正报错
+        # page.fix_orientation()
 
         # 3. & 4.
         page.split()
@@ -60,7 +61,7 @@ class Processor(object):
         page.mark_char_location()
 
         rct.rectify_by_location(page.iterate(1))
-        rct.rectify_3(page.iterate(3))
+        rct.rectify_5(page.iterate(5))
 
         if auxiliary_img is not None:
             uimg.save(auxiliary_img, page.drawing_copy)

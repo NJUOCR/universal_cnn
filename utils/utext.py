@@ -151,27 +151,60 @@ class TextChar:
         return self.is_half
 
     def set_result(self, c, p=0):
-        # self.c = c
+        """
+        Set the value of char of this TextChar obj.
+
+        > This function is similar to `set_content_text`, but is used to set values from predication.
+        In hence, it has a `p` parameter.
+        :param c:
+        :param p:
+        :return:
+        """
         self.set_content_text(c, msg='prediction result')
         self.p = round(p, 2)
         self.valid(set_to=True)
 
     def valid(self, set_to: bool = None) -> bool:
+        """
+        Setter and Getter
+        :param set_to:
+        :return:
+        """
         if set_to in (True, False):
             self.__valid = set_to
         return self.__valid
 
     def location(self, set_to: str = None) -> str:
+        """
+        Set or get the location of text content.
+        :param set_to: if this is `roof` or `floor`, set the `__location` value correspondingly
+        :return: this `__location` value
+        """
         assert set_to in (None, 'roof', 'floor')
         if set_to in ('roof', 'floor'):
             self.__location = set_to
         return self.__location
 
     def draw(self, y: tuple, x: tuple, color: tuple):
+        """
+        Draw auxiliary figures on the `drawing_copy`
+        :param y: tuple: (start, end)
+        :param x: tuple: (start, end)
+        :param color: tuple: (blue, green, red)
+        :return:
+        """
         if self.drawing_copy is not None:
             self.drawing_copy[y[0]:y[1], x[0]:x[1]] = color
 
     def set_content_text(self, c, msg='none'):
+        """
+        Set value of char to this TextChar obj.
+
+        > the value can be inferred by tf model, or rectified from a previous value.
+        :param c: value to be set
+        :param msg: the reason for setting this value, used for debugging.
+        :return:
+        """
         self.logs.append({
             'msg': msg,
             'last': self._c,
@@ -181,6 +214,10 @@ class TextChar:
 
     @property
     def c(self):
+        """
+        Read-only
+        :return: the value of char to this TextChar obj.
+        """
         return self._c
 
 
@@ -455,14 +492,15 @@ class TextLine:
     def __relative_width(self, pixel_width):
         return round(pixel_width / self.get_line_height(), 1)
 
-    def get_chars(self, only_valid: bool = False, replace_merged: bool = False):
+    def get_chars(self, only_valid: bool = False, replace_merged: bool = False)->List[TextChar]:
         """
         Get char objects.
         > ** ATTENTION: merged chars are excluded**
         > To get merged chars, use `get_merged_chars()`
-        :param replace_merged:
-        :param only_valid:
-        :return:
+        :param replace_merged: if it is `True`, the chars that merged into a new one is suppressed,
+        meanwhile the new one will be inserted.
+        :param only_valid: return chars that are valid. See `TextChar.valid(set_to=None)`
+        :return: list of TextChar objects.
         """
         if replace_merged is True:
             whole = self.split(force=False).copy()

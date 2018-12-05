@@ -32,7 +32,7 @@ def reverse(img):
     return img
 
 
-def auto_bin(img, otsu=False):
+def auto_bin(img, otsu: bool = False):
     """
     :param otsu: use OTSU instead of Adaptive
     :param img:
@@ -41,7 +41,7 @@ def auto_bin(img, otsu=False):
     # 读取图像，并转为灰度图
     img_grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY) if len(img.shape) == 3 and img.shape[2] == 3 else img
     if otsu:
-        return cv.threshold(img_grey, 0, 255, cv.THRESH_BINARY+cv.THRESH_OTSU)[1]
+        return cv.threshold(img_grey, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)[1]
     # 自适应二值化
     img_at_mean = cv.adaptiveThreshold(img_grey, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 47, 10)
     return img_at_mean
@@ -80,7 +80,7 @@ def fit_resize(img, new_height, new_width):
     h_rate = height / new_height
     w_rate = width / new_width
     rate = max(h_rate, w_rate)
-    dsize = int(width/rate), int(height/rate)
+    dsize = int(width / rate), int(height / rate)
     try:
         resized_img = auto_bin(cv.resize(img, dsize), otsu=True) if rate >= 1 else img
         return pad_to(resized_img, new_height, new_width, 255)

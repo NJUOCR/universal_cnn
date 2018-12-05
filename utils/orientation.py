@@ -92,16 +92,3 @@ def image_rotated(angle, image):
     return rotated_matrix
 
 
-if __name__ == '__main__':
-    img = cv.imread('E:/fuliye/imageText_02_R.jpg')
-    # gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    # padded_matrix = image_padded(gray)
-    # hough_lines = image_dft(padded_matrix)
-    # des_angle = calculate_angle(hough_lines, img)
-    # result_image = image_rotated(des_angle, img)
-    # cv.imshow('current_image', img)
-    # cv.imshow('des_image', result_image)
-    rr = fix_orientation(img)
-    cv.imshow("ss", rr)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
