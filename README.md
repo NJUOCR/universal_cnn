@@ -20,4 +20,10 @@ OCR服务以web的方式对外提供接口。 推荐使用我们发布的docker�
 
 ### 示例
 使用`wget`调用服务
-``
+
+`
+http://[your_host]:555/?path=/usr/local/src/data/doc_imgs/2014%E4%B8%9C%E5%88%91%E5%88%9D%E5%AD%97%E7%AC%AC0100%E5%8F%B7_%E8%AF%88%E9%AA%97%E7%BD%AA208%E9%A1%B5.pdf/img-0008.jpg
+`
+`
+http://[your_host]:555/?path=/usr/local/src/data/doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0008.jpg
+`
