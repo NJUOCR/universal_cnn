@@ -33,8 +33,8 @@ def hello():
 def recognize_file():
     args = request.args
     path = args['path']
-    auxiliary = bool(args['auxiliary'])
-    with_log = bool(args['logs'])
+    auxiliary = 'auxiliary' in args and bool(args['auxiliary'])
+    with_log = 'logs' in args and bool(args['logs'])
     if path[-4:] not in ('.jpg', '.png'):
         return make_response(jsonify({'error': 'only jpg, png files are supported'}, 415))
     if not os.path.isfile(path):
@@ -50,7 +50,7 @@ def recognize_file():
         json.dumps({
             'rs': rs,
             'img': '/static/auxiliary.jpg'
-        }),
+        }, ensure_ascii=False),
         mimetype='application/json'
     )
 
