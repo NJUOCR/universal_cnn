@@ -21,6 +21,8 @@ OCR服务以web的方式对外提供接口。 推荐使用我们发布的docker�
 ### 示例
 使用`wget`调用服务
 ``` shell
-wget http://[your_host]:555/?path=/usr/local/src/data/doc_imgs/2014东刑初字第0100号_诈骗罪208页.pdf/img-0008.jpg -O out.json
+wget http://[your_host]:555/?path=/usr/local/src/universal_cnn/test_data/input_data/img-0008.jpg -O out.json
 ```
 识别结果会写入`out.json`
+
+> 我们在镜像中准备了一些测试用的图片，位置：`/usr/local/src/universal_cnn/test_data/input_data`
