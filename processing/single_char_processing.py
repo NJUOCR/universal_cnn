@@ -1,4 +1,5 @@
 import threading
+from typing import Tuple
 
 import cv2 as cv
 
@@ -25,14 +26,25 @@ class Processor(object):
                     Processor._instance = object.__new__(cls)
         return Processor._instance
 
-    def _process(self, page_path: str, p_thresh: float, auxiliary_img: str) -> TextPage:
+    def _process(self, page_path: str, p_thresh: float, auxiliary_img: str,
+                 box: Tuple[float, float, float, float] = None) -> TextPage:
         print(page_path)
-        page = TextPage(uimg.read(page_path, 1), 0, drawing_copy=None)
+        src = uimg.read(page_path, 1)
+        if box is not None:
+            x1, y1, x2, y2 = box
+            x1 = int(x1 * src.shape[1])
+            y1 = int(y1 * src.shape[0])
+            x2 = int(x2 * src.shape[1])
+            y2 = int(y2 * src.shape[0])
+            if x1 > x2: x1, x2 = x2, x1
+            if y1 > y2: y1, y2 = y2, y1
+            src = src[y1:y2, x1:x2]
+        page = TextPage(src, 0, drawing_copy=None)
 
         # 1.
         page.auto_bin()
 
-        if auxiliary_img is not None:
+        if auxiliary_img is not None and auxiliary_img != '':
             page.drawing_copy = cv.cvtColor(page.img.copy(), cv.COLOR_GRAY2BGR)
 
         # 2.
@@ -72,12 +84,14 @@ class Processor(object):
 
         return page
 
-    def get_json_result(self, page_path: str, p_thresh: float, auxiliary_img: str):
-        page = self._process(page_path, p_thresh, auxiliary_img)
+    def get_json_result(self, page_path: str, p_thresh: float, auxiliary_img: str,
+                        box: Tuple[float, float, float, float]=None):
+        page = self._process(page_path, p_thresh, auxiliary_img, box=box)
         return page.format_json(p_thresh=p_thresh)
 
-    def get_text_result(self, page_path: str, p_thresh: float, auxiliary_img: str):
-        page = self._process(page_path, p_thresh, auxiliary_img)
+    def get_text_result(self, page_path: str, p_thresh: float, auxiliary_img: str,
+                        box: Tuple[float, float, float, float]=None):
+        page = self._process(page_path, p_thresh, auxiliary_img, box=box)
         return page.format_result(p_thresh=p_thresh)
 
 

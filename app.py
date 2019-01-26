@@ -55,10 +55,20 @@ def recognize_file():
     )
 
 
+@app.route("/rec-part")
+def recognize_part():
+    args = request.args
+    box = (args['x1'], args['y1'], args['x2'], args['y2'])
+    x1, y1, x2, y2 = map(lambda s: float(s) / 100, box)
+    path = args['path']
+    rs = proc.get_text_result(path, CONF['p_thresh'], '', box=(x1, y1, x2, y2))
+    return rs
+
+
 @app.route("/debugger")
 def debugger():
     return send_file('templates/debugger.html')
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5678, debug=False, threaded=False)
+    app.run(host='0.0.0.0', port=5555, debug=False, threaded=False)
