@@ -28,21 +28,20 @@ def rectify_5(char_gen: Generator):
             char.set_content_text('”', msg='`’` on right')
             right.set_content_text('', msg='merged into left')
         elif char.c == 'O':
-            num_score = sum(map(lambda _: bool(num_ptn.match(_.c)), [lefter, left, right, righter]))
-            letter_score = sum(map(lambda _: bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
+            num_score = sum(map(lambda _: _.c is not None and bool(num_ptn.match(_.c)), [lefter, left, right, righter]))
+            letter_score = sum(map(lambda _: _.c is not None and bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
             if num_score > letter_score:
                 char.set_content_text('0', msg='more numbers around %d>%d' % (num_score, letter_score))
         elif char.c == '0':
-            num_score = sum(map(lambda _: bool(num_ptn.match(_.c)), [lefter, left, right, righter]))
-            letter_score = sum(map(lambda _: bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
+            num_score = sum(map(lambda _: _.c is not None and bool(num_ptn.match(_.c)), [lefter, left, right, righter]))
+            letter_score = sum(map(lambda _: _.c is not None and bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
             if letter_score > num_score:
                 char.set_content_text('O', msg='more letters around %d>%d' % (letter_score, num_score))
-        
         if char.c in ('I', 'l'):
             if right.c in ('、',):
                 char.set_content_text('1', msg='`、` on right')
             else:
-                num_score = sum(map(lambda _: bool(num_ptn.match(_.c)), [lefter, left, right, righter]))
-                letter_score = sum(map(lambda _: bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
+                num_score = sum(map(lambda _: _.c is not None and bool(num_ptn.match(_.c)), [lefter, left, right, righter]))
+                letter_score = sum(map(lambda _: _.c is not None and bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
                 if num_score > letter_score:
                     char.set_content_text('1', msg='more numbers around %d>%d' % (num_score, letter_score))
