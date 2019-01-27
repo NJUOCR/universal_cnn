@@ -35,6 +35,10 @@ def recognize_file():
     path = args['path']
     auxiliary = 'auxiliary' in args and bool(args['auxiliary'])
     with_log = 'logs' in args and bool(args['logs'])
+    x1 = float(args['x1']) if 'x1' in args else 0
+    y1 = float(args['y1']) if 'y1' in args else 0
+    x2 = float(args['x2']) if 'x2' in args else 1.
+    y2 = float(args['y2']) if 'y2' in args else 1.
     if path[-4:] not in ('.jpg', '.png'):
         return make_response(jsonify({'error': 'only jpg, png files are supported'}, 415))
     if not os.path.isfile(path):
@@ -42,10 +46,12 @@ def recognize_file():
 
     if not with_log:
         rs = proc.get_text_result(path, p_thresh=CONF['p_thresh'],
-                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None)
+                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
+                                  box=(x1, y1, x2, y2))
     else:
         rs = proc.get_json_result(path, p_thresh=CONF['p_thresh'],
-                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None)
+                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
+                                  box=(x1, y1, x2, y2))
     return rs if not auxiliary else Response(
         json.dumps({
             'rs': rs,
@@ -55,20 +61,10 @@ def recognize_file():
     )
 
 
-@app.route("/rec-part")
-def recognize_part():
-    args = request.args
-    box = (args['x1'], args['y1'], args['x2'], args['y2'])
-    x1, y1, x2, y2 = map(lambda s: float(s) / 100, box)
-    path = args['path']
-    rs = proc.get_text_result(path, CONF['p_thresh'], '', box=(x1, y1, x2, y2))
-    return rs
-
-
 @app.route("/debugger")
 def debugger():
     return send_file('templates/debugger.html')
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5555, debug=False, threaded=False)
+    app.run(host='0.0.0.0', port=4444, debug=False, threaded=False)

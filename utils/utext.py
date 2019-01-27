@@ -554,11 +554,11 @@ class TextPage:
         if not force and len(self.__text_lines) > 0:
             return self.__text_lines
         else:
-            # horizontal_smooth = (0, 0)
-            horizontal_smooth = min(15, (self.img.shape[0] * self.img.shape[1]) // 100000), 9
+            horizontal_smooth = (0, 0)
+            # horizontal_smooth = min(15, (self.img.shape[0] * self.img.shape[1]) // 100000), 9
             horizontal_sum_array = proj.project(self.img, direction='horizontal', smooth=horizontal_smooth)
-            # line_splitters = proj.get_splitter_end(horizontal_sum_array)
-            line_splitters = proj.get_splitter_horizontal(horizontal_sum_array)
+            line_splitters = proj.get_splitter_end(horizontal_sum_array)
+            # line_splitters = proj.get_splitter_horizontal(horizontal_sum_array)
 
             if self.drawing_copy is not None:
                 self.drawing_copy[line_splitters, :] = 180
