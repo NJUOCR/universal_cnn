@@ -33,7 +33,7 @@ def hello():
 def recognize_file():
     args = request.args
     path = args['path']
-    auxiliary = 'auxiliary' in args and bool(args['auxiliary'])
+    auxiliary = 'auxiliary' in args and bool(args['auxiliary'])     # or True
     with_log = 'logs' in args and bool(args['logs'])
     x1 = float(args['x1']) if 'x1' in args else 0
     y1 = float(args['y1']) if 'y1' in args else 0
