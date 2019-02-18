@@ -543,17 +543,19 @@ class TextPage:
 
         self.__text_lines = []
 
-    def remove_lines(self):
-        h, w = self.img.shape[:2]
-        threshold = sqrt(h ** 2 + w ** 2) // 20
-        gap = w // 300 + 2
-        min_length = sqrt(h ** 2 + w ** 2) // 30
+    def remove_lines(self, origin_size=None):
+        h, w = self.img.shape[:2] if origin_size is None else origin_size
+        threshold = int(sqrt(h ** 2 + w ** 2) // 20)
+        gap = int(w // 300 + 2)
+        min_length = int(sqrt(h ** 2 + w ** 2) // 30)
         self.img = 255 - self.img
+        print("[Hough Args] threshold=%d, gap=%d, min_length=%d" % (threshold, gap, min_length))
         lines = cv.HoughLinesP(self.img, 1, np.pi / 180, threshold,
                                minLineLength=min_length, maxLineGap=gap)
         _lines = lines[:, 0, :]  # 提取为二维
         for x1, y1, x2, y2 in _lines[:]:
             cv.line(self.img, (x1, y1), (x2, y2), 0, 1)
+        self.img = 255 - self.img
         return self
 
     def auto_bin(self):

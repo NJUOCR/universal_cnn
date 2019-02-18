@@ -38,14 +38,16 @@ class Processor(object):
             y2 = int(y2 * src.shape[0])
             if x1 > x2: x1, x2 = x2, x1
             if y1 > y2: y1, y2 = y2, y1
-            src = src[y1:y2, x1:x2]
-        page = TextPage(src, 0, drawing_copy=None)
+            page_img = src[y1:y2, x1:x2]
+        else:
+            page_img = src
+        page = TextPage(page_img, 0, drawing_copy=None)
 
         # 1.
         page.auto_bin()
 
         if remove_lines:
-            page.remove_lines()
+            page.remove_lines(origin_size=src.shape[:2])
 
         if auxiliary_img is not None and auxiliary_img != '':
             page.drawing_copy = cv.cvtColor(page.img.copy(), cv.COLOR_GRAY2BGR)
