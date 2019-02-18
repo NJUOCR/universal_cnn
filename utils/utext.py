@@ -1,4 +1,5 @@
 import re
+from math import sqrt
 from collections import deque
 from typing import List, Tuple
 
@@ -543,9 +544,13 @@ class TextPage:
         self.__text_lines = []
 
     def remove_lines(self):
-        gap = self.img.shape[1] // 300 + 3
+        h, w = self.img.shape[:2]
+        threshold = sqrt(h ** 2 + w ** 2) // 20
+        gap = w // 300 + 2
+        min_length = sqrt(h ** 2 + w ** 2) // 30
         self.img = 255 - self.img
-        lines = cv.HoughLinesP(self.img, 0.01, np.pi / 180, 150, minLineLength=100, maxLineGap=gap)
+        lines = cv.HoughLinesP(self.img, 1, np.pi / 180, threshold,
+                               minLineLength=min_length, maxLineGap=gap)
         _lines = lines[:, 0, :]  # 提取为二维
         for x1, y1, x2, y2 in _lines[:]:
             cv.line(self.img, (x1, y1), (x2, y2), 0, 1)
