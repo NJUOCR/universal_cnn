@@ -27,7 +27,7 @@ class Processor(object):
         return Processor._instance
 
     def _process(self, page_path: str, p_thresh: float, auxiliary_img: str,
-                 box: Tuple[float, float, float, float] = None) -> TextPage:
+                 box: Tuple[float, float, float, float] = None, remove_lines: bool=False) -> TextPage:
         print(page_path)
         src = uimg.read(page_path, 1)
         if box is not None:
@@ -43,6 +43,9 @@ class Processor(object):
 
         # 1.
         page.auto_bin()
+
+        if remove_lines:
+            page.remove_lines()
 
         if auxiliary_img is not None and auxiliary_img != '':
             page.drawing_copy = cv.cvtColor(page.img.copy(), cv.COLOR_GRAY2BGR)
@@ -85,13 +88,13 @@ class Processor(object):
         return page
 
     def get_json_result(self, page_path: str, p_thresh: float, auxiliary_img: str,
-                        box: Tuple[float, float, float, float]=None):
-        page = self._process(page_path, p_thresh, auxiliary_img, box=box)
+                        box: Tuple[float, float, float, float]=None, remove_lines=False):
+        page = self._process(page_path, p_thresh, auxiliary_img, box=box, remove_lines=remove_lines)
         return page.format_json(p_thresh=p_thresh)
 
     def get_text_result(self, page_path: str, p_thresh: float, auxiliary_img: str,
-                        box: Tuple[float, float, float, float]=None):
-        page = self._process(page_path, p_thresh, auxiliary_img, box=box)
+                        box: Tuple[float, float, float, float]=None, remove_lines=False):
+        page = self._process(page_path, p_thresh, auxiliary_img, box=box, remove_lines=remove_lines)
         return page.format_result(p_thresh=p_thresh)
 
 

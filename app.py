@@ -2,7 +2,7 @@ import json
 import os
 
 import yaml
-from flask import Flask, request, make_response, jsonify, render_template, Response, send_file
+from flask import Flask, request, make_response, jsonify, Response, send_file
 
 from processing.single_char_processing import Processor
 
@@ -24,16 +24,12 @@ proc = Processor(CONF['charmap_path'], CONF['aliasmap_path'], CONF['ckpt_dir'],
                  CONF['input_height'], CONF['input_width'], CONF['num_class'], CONF['batch_size'])
 
 
-@app.route("/hello")
-def hello():
-    return 'hello ocr!'
-
-
 @app.route("/")
 def recognize_file():
     args = request.args
     path = args['path']
-    auxiliary = 'auxiliary' in args and bool(args['auxiliary'])     # or True
+    remove_lines = bool(args['remove_lines']) if 'remove_lines' in args else False
+    auxiliary = 'auxiliary' in args and bool(args['auxiliary'])  # or True
     with_log = 'logs' in args and bool(args['logs'])
     x1 = float(args['x1']) if 'x1' in args else 0
     y1 = float(args['y1']) if 'y1' in args else 0
@@ -47,11 +43,11 @@ def recognize_file():
     if not with_log:
         rs = proc.get_text_result(path, p_thresh=CONF['p_thresh'],
                                   auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
-                                  box=(x1, y1, x2, y2))
+                                  box=(x1, y1, x2, y2), remove_lines=remove_lines)
     else:
         rs = proc.get_json_result(path, p_thresh=CONF['p_thresh'],
                                   auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
-                                  box=(x1, y1, x2, y2))
+                                  box=(x1, y1, x2, y2), remove_lines=remove_lines)
     return rs if not auxiliary else Response(
         json.dumps({
             'rs': rs,

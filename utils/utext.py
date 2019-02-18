@@ -542,6 +542,15 @@ class TextPage:
 
         self.__text_lines = []
 
+    def remove_lines(self):
+        gap = self.img.shape[1] // 300 + 3
+        self.img = 255 - self.img
+        lines = cv.HoughLinesP(self.img, 0.01, np.pi / 180, 150, minLineLength=100, maxLineGap=gap)
+        _lines = lines[:, 0, :]  # 提取为二维
+        for x1, y1, x2, y2 in _lines[:]:
+            cv.line(self.img, (x1, y1), (x2, y2), 0, 1)
+        return self
+
     def auto_bin(self):
         self.img = uimg.auto_bin(self.img, otsu=True)
         return self
