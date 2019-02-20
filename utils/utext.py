@@ -552,7 +552,7 @@ class TextPage:
         print("[Hough Args] threshold=%d, gap=%d, min_length=%d" % (threshold, gap, min_length))
         lines = cv.HoughLinesP(self.img, 1, np.pi / 180, threshold,
                                minLineLength=min_length, maxLineGap=gap)
-        _lines = lines[:, 0, :]  # 提取为二维
+        _lines = [] if lines is None else lines[:, 0, :]  # 提取为二维
         for x1, y1, x2, y2 in _lines[:]:
             cv.line(self.img, (x1, y1), (x2, y2), 0, 1)
         self.img = 255 - self.img
