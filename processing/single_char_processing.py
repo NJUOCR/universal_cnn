@@ -3,7 +3,7 @@ from typing import Tuple
 
 import cv2 as cv
 
-import processing.rectification as rct
+import utils.rectification as rct
 import utils.uimg as uimg
 from data import SingleCharData
 from main import Main

@@ -48,13 +48,7 @@ def recognize_file():
         rs = proc.get_json_result(path, p_thresh=CONF['p_thresh'],
                                   auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
                                   box=(x1, y1, x2, y2), remove_lines=remove_lines)
-    return rs if not auxiliary else Response(
-        json.dumps({
-            'rs': rs,
-            'img': '/static/auxiliary.jpg'
-        }, ensure_ascii=False),
-        mimetype='application/json'
-    )
+    return rs
 
 
 @app.route("/debugger")

@@ -60,8 +60,8 @@ def canny_bin(img, minv=50, maxv=150, apertureSize=3):
 
 # 腐蚀
 def erode_img(img, kernal_heght, kernal_width):
-    kernal = np.uint8(np.zeros((kernal_heght, kernal_width)))
-    img = cv.erode(img, kernal, iterations=2)
+    kernel = np.uint8(np.zeros((kernal_heght, kernal_width)))
+    img = cv.erode(img, kernel, iterations=2)
     return img
 
 
