@@ -34,11 +34,11 @@ python app.py
 ### 示例
 使用`wget`调用服务
 ``` shell
-wget http://[your_host]:555/?path=/usr/local/src/universal_cnn/test_data/input_data/img-0008.jpg&remove_lines=1 -O out.json
+wget -O out.txt http://[your_host]:555/?path=test_data/test0.png&remove_lines=1
 ```
-识别结果会写入`out.json`
+识别结果会写入`out.txt`
 
-> 我们在镜像中准备了一些测试用的图片，位置：`/usr/local/src/universal_cnn/test_data/input_data`
+> 我们在镜像中准备了一些测试用的图片，位置：`[project_root]/test_data`
 # Trouble Shooting
 ## 1. 缺少动态链接库
 ### 1.1 Cannot open ** libSM.so.6 ** when import cv2:
