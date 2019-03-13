@@ -3,7 +3,7 @@
 | 依赖 | 安装示例 |
 | --- | --- |
 | cv2 | `pip install opencv-python` |
-| tensorflow | `pip install tensorflow` |
+| tensorflow | `pip install tensorflow==1.11.0` |
 | yaml | `pip install pyyaml` |
 | flask | `pip install Flask` |
 | progressbar | `pip install progressbar2` |
