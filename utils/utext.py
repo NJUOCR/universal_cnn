@@ -412,6 +412,13 @@ class TextLine:
             return
 
         def merge_score(cur_indices: deque, nbr: TextChar, which: str = ''):
+            """
+            耐心点慢慢看。。。
+            :param cur_indices:
+            :param nbr:
+            :param which:
+            :return:
+            """
             assert which in ('left', 'right')
             # cur_width = self.__relative_width(sum(map(lambda idx: self.get_chars()[idx].get_width(), cur_indices)))
             cur_width = sum(map(lambda idx: self.get_char_at(idx).get_width(), cur_indices))
@@ -452,7 +459,7 @@ class TextLine:
                     indices.appendleft(indices[0] - 1)
                 else:
                     indices.append(indices[-1] + 1)
-                # fixme python 递归可能会很慢，需要检查这一步是否花费太长时间
+                # todo python 递归可能会很慢，需要检查这一步是否花费太长时间
                 return best_merge(indices)
             else:
                 # 左右都无法合并
