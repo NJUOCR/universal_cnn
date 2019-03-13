@@ -1,6 +1,6 @@
 
-# Requirement
-| dependency | instalation |
+# 依赖
+| 依赖 | 安装示例 |
 | --- | --- |
 | cv2 | `pip install opencv-python` |
 | tensorflow | `pip install tensorflow` |
@@ -41,7 +41,7 @@ wget http://[your_host]:555/?path=/usr/local/src/universal_cnn/test_data/input_d
 > 我们在镜像中准备了一些测试用的图片，位置：`/usr/local/src/universal_cnn/test_data/input_data`
 # Trouble Shooting
 ## 1. 缺少动态链接库
-1.1 Cannot open ** libSM.so.6 ** when import cv2:
+### 1.1 Cannot open ** libSM.so.6 ** when import cv2:
 
 ``` shell
 apt install -y libsm6 libxext6
@@ -49,7 +49,7 @@ apt install -y libsm6 libxext6
 
 *by [StackOverflow](https://stackoverflow.com/search?q=import+cv2+libXrender.so.1+)*
 
-1.2 Cannot open ** libXrender.so.1 ** when import cv2:
+### 1.2 Cannot open ** libXrender.so.1 ** when import cv2:
 
 ``` shell
 sudo apt-get install libxrender1
