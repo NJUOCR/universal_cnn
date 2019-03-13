@@ -224,7 +224,7 @@ class TextChar:
 
 class TextLine:
 
-    def __init__(self, line_img, idx, drawing_copy=None):
+    def __init__(self, line_img, idx, drawing_copy=None, offset_y=None):
         """
 
         :param line_img: the original line image
@@ -234,7 +234,7 @@ class TextLine:
         """
         self.img = line_img
         self.idx = idx
-        # self.char_splitters = []
+        self.offset_y = offset_y
         self.drawing_copy = drawing_copy
 
         self.__text_chars = []
@@ -589,7 +589,7 @@ class TextPage:
             for line_id, (upper, lower) in enumerate(zip(line_splitters, line_splitters[1:])):
                 line_img = self.img[upper:lower, :]
                 line_drawing_copy = self.drawing_copy[upper:lower, :] if self.drawing_copy is not None else None
-                text_line = TextLine(line_img, line_id, drawing_copy=line_drawing_copy)
+                text_line = TextLine(line_img, line_id, drawing_copy=line_drawing_copy, offset_y=upper/self.img.shape[0])
                 self.__text_lines.append(text_line)
         return self.__text_lines
 
