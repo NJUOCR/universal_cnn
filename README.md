@@ -8,11 +8,16 @@
 | flask | `pip install Flask` |
 | progressbar | `pip install progressbar2` |
 
+# TODO
+- 添加文件上传功能
+
 # 使用
 OCR服务以web的方式对外提供接口。 推荐使用我们发布的docker镜像，~~点击下载(Not provide yet)~~
 
+软院同学参考[这里](https://github.com/NJUOCR/universal_cnn/wiki/学院内网环境下的使用说明)下载
+
 ## 在docker中启动服务
-**默认的web端口为 555**
+**可以在app.py的末尾更改服务端口**
 
 运行
 ``` shell
@@ -24,17 +29,14 @@ python app.py
 
 ## 使用OCR服务
 服务接口为标准GET请求：
-`http://[host]:555/?path=[your_image_path]`
+`http://[host]:[port]/?path=[your_image_path]`
 
 `your_image_path`是需要做识别的图片路径，**务必确保它已经位于容器中，或已通过其他方式挂载进容器**
-
-> **不包含文件上传的功能**，我们不对“使用何种方式上传文件?”，“文件上传到哪里？”，“识别后是否删除文件？”等相关问题提供统一的解决方案
-> 这些问题由使用者来解决
 
 ### 示例
 使用`wget`调用服务
 ``` shell
-wget -O out.txt http://[your_host]:555/?path=test_data/test0.png&remove_lines=1
+wget -O out.txt http://[your_host]:[port]/?path=test_data/test0.png&remove_lines=1
 ```
 识别结果会写入`out.txt`
 
