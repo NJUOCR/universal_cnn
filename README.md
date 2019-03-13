@@ -25,7 +25,7 @@ python app.py
 ### 示例
 使用`wget`调用服务
 ``` shell
-wget http://[your_host]:555/?path=/usr/local/src/universal_cnn/test_data/input_data/img-0008.jpg -O out.json
+wget http://[your_host]:555/?path=/usr/local/src/universal_cnn/test_data/input_data/img-0008.jpg&remove_lines=1 -O out.json
 ```
 识别结果会写入`out.json`
 
