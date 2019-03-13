@@ -1,4 +1,7 @@
 
+***软院同学参考[这里](https://github.com/NJUOCR/universal_cnn/wiki/学院内网环境下的使用说明)下载***
+
+---
 # 依赖
 | 依赖 | 安装示例 |
 | --- | --- |
@@ -14,7 +17,6 @@
 # 使用
 OCR服务以web的方式对外提供接口。 推荐使用我们发布的docker镜像，~~点击下载(Not provide yet)~~
 
-软院同学参考[这里](https://github.com/NJUOCR/universal_cnn/wiki/学院内网环境下的使用说明)下载
 
 ## 在docker中启动服务
 **可以在app.py的末尾更改服务端口**
