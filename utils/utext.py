@@ -699,12 +699,30 @@ class TextPage:
         """
         
         :param p_thresh: 
-        :return: 
+        :return: {
+            'meta': {
+                'height': int,  // 图片高度，单位为像素
+                'width': int    // 图片宽度，单位为像素
+            }，
+            'lines': [  // 包含所有的行
+                [           // 包含该行所有的字符
+                    {           // 字符对象
+                        'c': str,   // 字符
+                        'x': int,   // 相对于输入图片左边的距离，单位为像素
+                        'y': int,   // 相对于输入图片顶部的距离，单位为像素
+                        'h': int,   // 字符的实际高度（裁剪后），单位为像素
+                        'w': int,   // 字符的实际宽度（裁剪后），单位为像素
+                    },
+                    // {...}
+                ],
+                // [...]
+            ]
+        }
         """
         ret = {
             'meta': {
-                'height': self.img.shape[0],  # height by pixel of the input image
-                'width': self.img.shape[1]  # width by pixel of the input image
+                'height': self.img.shape[0],    # height by pixel of the input image
+                'width': self.img.shape[1]      # width by pixel of the input image
             },
             'lines': list(map(
                 lambda line: [{
