@@ -2,7 +2,7 @@ import json
 import os
 
 import yaml
-from flask import Flask, request, make_response, jsonify, Response, send_file
+from flask import Flask, request, make_response, jsonify, send_file
 
 from processing.single_char_processing import Processor
 
@@ -29,8 +29,12 @@ def recognize_file():
     args = request.args
     path = args['path']
     remove_lines = bool(args['remove_lines']) if 'remove_lines' in args else False
-    auxiliary = 'auxiliary' in args and bool(args['auxiliary'])  # or True
+    auxiliary = 'auxiliary' in args and bool(args['auxiliary'])
+
+    # Deprecated Option `with_log`
     with_log = 'logs' in args and bool(args['logs'])
+
+    verbose = 'verbose' in args and bool(args['verbose'])
     x1 = float(args['x1']) if 'x1' in args else 0
     y1 = float(args['y1']) if 'y1' in args else 0
     x2 = float(args['x2']) if 'x2' in args else 1.
@@ -40,14 +44,19 @@ def recognize_file():
     if not os.path.isfile(path):
         return make_response(jsonify({'error': 'target file not found on server', 'target-file': path}, 404))
 
-    if not with_log:
+    if not verbose:
         rs = proc.get_text_result(path, p_thresh=CONF['p_thresh'],
                                   auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
                                   box=(x1, y1, x2, y2), remove_lines=remove_lines)
+    # elif with_log:
+    #     rs = proc.get_json_result(path, p_thresh=CONF['p_thresh'],
+    #                               auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
+    #                               box=(x1, y1, x2, y2), remove_lines=remove_lines)
     else:
-        rs = proc.get_json_result(path, p_thresh=CONF['p_thresh'],
-                                  auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
-                                  box=(x1, y1, x2, y2), remove_lines=remove_lines)
+        rs = proc.get_verbose_result(path, p_thresh=CONF['p_thresh'],
+                                     auxiliary_img='./static/auxiliary.jpg' if auxiliary else None,
+                                     box=(x1, y1, x2, y2), remove_lines=remove_lines)
+        rs = json.dumps(rs, ensure_ascii=False, indent=2)
     return rs
 
 

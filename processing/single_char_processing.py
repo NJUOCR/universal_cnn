@@ -99,6 +99,11 @@ class Processor(object):
         page = self._process(page_path, p_thresh, auxiliary_img, box=box, remove_lines=remove_lines)
         return page.format_result(p_thresh=p_thresh)
 
+    def get_verbose_result(self, page_path: str, p_thresh: float, auxiliary_img: str,
+                           box: Tuple[float, float, float, float] = None, remove_lines=False):
+        page = self._process(page_path, p_thresh, auxiliary_img, box=box, remove_lines=remove_lines)
+        return page.format_verbose(p_thresh=p_thresh)
+
 
 if __name__ == '__main__':
     path = "doc_imgs/2015南立刑初字第0001号_枉法裁判罪84页.pdf/img-0228.jpg"

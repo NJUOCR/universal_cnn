@@ -1,6 +1,6 @@
 import re
-from math import sqrt
 from collections import deque
+from math import sqrt
 from typing import List, Tuple
 
 import cv2 as cv
@@ -25,8 +25,9 @@ def is_chinese(c):
 
 class TextChar:
 
-    def __init__(self, char_img, drawing_copy=None):
+    def __init__(self, char_img, offset_x=None, drawing_copy=None):
         self.img = char_img
+        self._offset_x = None
         self.drawing_copy = drawing_copy
         self.content_top = None
         self.content_bottom = None
@@ -221,6 +222,26 @@ class TextChar:
         """
         return self._c
 
+    @property
+    def inline_offset(self) -> Tuple[int, int]:
+        """
+        
+        :return: A tuple:
+        1. Distance (by pixel) to the upper bound of belonging TextLine
+        2. Distance (by pixel) to the very left of belonging TextLine
+        """
+        return (self._offset_x + self.get_padding('left'), self.get_padding('top')) \
+            if self._offset_x is not None else (None, None)
+
+    @property
+    def char_size(self) -> Tuple[int, int]:
+        """
+        Calculate the size of the actual character, not the size of the entire char image.
+        :return: A tuple: [height, width], for chinese characters, `height` and `width`
+                could be the same, but for arabic numbers and english letters, they're not
+        """
+        return self.get_content_height(), self.get_content_width()
+
 
 class TextLine:
 
@@ -234,7 +255,7 @@ class TextLine:
         """
         self.img = line_img
         self.idx = idx
-        self.offset_y = offset_y
+        self._offset_y = offset_y
         self.drawing_copy = drawing_copy
 
         self.__text_chars = []
@@ -274,6 +295,7 @@ class TextLine:
             self.__text_chars = list(
                 filter(lambda tc: tc.has_content(),
                        [TextChar(self.img[:, l:r],
+                                 offset_x=l,
                                  drawing_copy=self.drawing_copy[:, l:r] if self.drawing_copy is not None else None) for
                         l, r in
                         zip(splitters, splitters[1:])]
@@ -500,16 +522,19 @@ class TextLine:
     def __relative_width(self, pixel_width):
         return round(pixel_width / self.get_line_height(), 1)
 
-    def get_chars(self, only_valid: bool = False, replace_merged: bool = False)->List[TextChar]:
+    def get_chars(self, only_valid: bool = False, replace_merged: bool = False) -> List[TextChar]:
         """
         Get char objects.
         > ** ATTENTION: merged chars are excluded**
         > To get merged chars, use `get_merged_chars()`
-        :param replace_merged: if it is `True`, the chars that merged into a new one is suppressed,
+        :param replace_merged: **DO NOT USE, NOT TESTED** if it is `True`, the chars that merged into a new one is suppressed,
         meanwhile the new one will be inserted.
         :param only_valid: return chars that are valid. See `TextChar.valid(set_to=None)`
         :return: list of TextChar objects.
         """
+
+        # SORRY, these 'merging codes' below aren't tested
+        # todo 需要测试合并逻辑
         if replace_merged is True:
             whole = self.split(force=False).copy()
             for indices, m_char in zip(self.get_merged_indices(), self.get_merged_chars()):
@@ -539,6 +564,10 @@ class TextLine:
         if set_to in (True, False):
             self.__empty = set_to
         return self.__empty
+
+    @property
+    def offset_y(self):
+        return self._offset_y
 
 
 class TextPage:
@@ -589,7 +618,8 @@ class TextPage:
             for line_id, (upper, lower) in enumerate(zip(line_splitters, line_splitters[1:])):
                 line_img = self.img[upper:lower, :]
                 line_drawing_copy = self.drawing_copy[upper:lower, :] if self.drawing_copy is not None else None
-                text_line = TextLine(line_img, line_id, drawing_copy=line_drawing_copy, offset_y=upper/self.img.shape[0])
+                text_line = TextLine(line_img, line_id, drawing_copy=line_drawing_copy,
+                                     offset_y=upper)
                 self.__text_lines.append(text_line)
         return self.__text_lines
 
@@ -647,9 +677,16 @@ class TextPage:
             yield compressed[i - r: i + r + 1]
 
     def format_result(self, p_thresh=DEFAULT_NOISE_P_THRESH) -> str:
+        """
+        
+        :param p_thresh: 
+        :return: The text result of ocr
+        """
         buff = []
         for line in self.get_lines(ignore_empty=True):
             line_buff = []
+            # 不知道当时为什么没有将`replace_merged`设置为`True`，而是在下面进行merge
+            # todo 字符合并的逻辑应当移入`line.get_chars()`中
             for char in line.get_chars():
                 line_buff.append(char.c if char.p > p_thresh else '')
             for m_indices, m_char in zip(line.get_merged_indices(), line.get_merged_chars()):
@@ -657,6 +694,30 @@ class TextPage:
                 line_buff[m_indices[-1]] = m_char.c if m_char.p > p_thresh else ''
             buff.append(''.join(line_buff))
         return '\n'.join(buff)
+
+    def format_verbose(self, p_thresh=DEFAULT_NOISE_P_THRESH) -> dict:
+        """
+        
+        :param p_thresh: 
+        :return: 
+        """
+        ret = {
+            'meta': {
+                'height': self.img.shape[0],  # height by pixel of the input image
+                'width': self.img.shape[1]  # width by pixel of the input image
+            },
+            'lines': list(map(
+                lambda line: [{
+                    'c': char.c,
+                    'x': char.inline_offset[1],
+                    'y': line.offset_y + char.inline_offset[0] if None not in (line.offset_y, *char.inline_offset) else None,
+                    'h': char.char_size[0],
+                    'w': char.char_size[1]
+                } for char in line.get_chars(only_valid=True, replace_merged=True)],
+                self.get_lines(ignore_empty=True)
+            ))
+        }
+        return ret
 
     def format_json(self, p_thresh=DEFAULT_NOISE_P_THRESH) -> list:
         buff = []

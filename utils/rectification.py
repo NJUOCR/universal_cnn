@@ -30,7 +30,7 @@ def rectify_5(char_gen: Generator):
         elif char.c == right.c == '’':
             char.set_content_text('”', msg='`’` on right')
             right.set_content_text('', msg='merged into left')
-        elif char.c == 'O':
+        elif char.c in ('O', '。'):
             num_score = sum(map(lambda _: _.c is not None and bool(num_ptn.match(_.c)), [lefter, left, right, righter]))
             letter_score = sum(
                 map(lambda _: _.c is not None and bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
@@ -53,10 +53,16 @@ def rectify_5(char_gen: Generator):
                 if num_score > letter_score:
                     char.set_content_text('1', msg='more numbers around %d>%d' % (num_score, letter_score))
 
+        if char.c == 'd' and right.c == '、':
+            char.set_content_text('小', msg='merge "d、" to "小"')
+            right.set_content_text('', msg='merge "d、" to "小"')
+
         char_5_c = set(map(lambda x: x.c, char_5))
         if len(char_5_c.intersection(('年', '月', '日', '时', '分', '秒'))) > 0:
             for char in char_5:
                 if char.c in ('I', 'l', '!', '！'):
                     char.set_content_text('1')
-                if char.c in ('O',):
+                if char.c in ('O', ):
                     char.set_content_text('0')
+
+
