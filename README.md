@@ -1,5 +1,5 @@
 
-***软院同学参考[这里](https://github.com/NJUOCR/universal_cnn/wiki/学院内网环境下的使用说明)下载***
+***软院同学参考[学院内网环境下的使用说明](./docs/学院内网环境下的使用说明.md)下载***
 
 ---
 # 依赖
@@ -37,14 +37,20 @@ python3 app.py
 
 ## 使用OCR服务
 服务接口为标准GET请求：
-`http://[host]:[port]/?path=[your_image_path]`
+`http://$(host):$(port)/?path=$(your_image_path)[&auxiliary=1][&remove_lines=1][&verbose=1]`
 
-`your_image_path`是需要做识别的图片路径，**务必确保它已经位于容器中，或已通过其他方式挂载进容器**
+### 参数说明
+| 键 | 类型 | 说明 |
+| --- | --- | --- |
+| path | *必填* |  `your_image_path`是需要做识别的图片路径，**务必确保它已经位于容器中，或已通过其他方式挂载进容器** |
+| auxiliary | *OCR开发人员可选* | 是否缓存中间过程图片，可以用来分析识别结果 |
+| remove_lines | *可选* | 尝试去除图片中的下划线和表格框 |
+| verbose | *可选* | 获取关于识别文字的*位置*、*大小*等，请参考[获取更多信息](./docs/获取关于识别结果的更多信息.md)
 
 ### 示例
-使用`wget`调用服务
+使用`wget`调用服务，建议在URI中加入引号。
 ``` shell
-wget -O out.txt http://[your_host]:[port]/?path=test_data/test0.png&remove_lines=1
+wget -O out.txt 'http://[your_host]:[port]/?path=test_data/test0.png&remove_lines=1'
 ```
 识别结果会写入`out.txt`
 
