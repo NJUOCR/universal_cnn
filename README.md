@@ -15,7 +15,10 @@
 - 添加文件上传功能
 
 # 使用
-OCR服务以web的方式对外提供接口。 推荐使用我们发布的docker镜像，~~点击下载(Not provide yet)~~
+OCR服务以web的方式对外提供接口。 推荐使用我们发布的docker镜像，~~点击下载(不可用)~~，镜像支持linux、mac、windows平台。
+
+> 安装windows版docker的过程中，请根据提示选择`启用hyper-v`
+> **特别注意** 非windows专业版用户安装docker请参考[@惠天宇](https://blog.csdn.net/zhuiyisinian/article/details/88700889)
 
 
 ## 在docker中启动服务
