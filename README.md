@@ -75,3 +75,10 @@ apt install -y libsm6 libxext6
 sudo apt-get install libxrender1
 ```
 *by [StackOverflow](https://stackoverflow.com/questions/47113029/importerror-libsm-so-6-cannot-open-shared-object-file-no-such-file-or-directo)*
+
+### 1.3 Cannot open **libGL.so.1**
+``` shell
+apt install libgl1-mesa-glx
+```
+
+*by [StackOverflow](https://stackoverflow.com/questions/45266042/ipython-import-matplotlib-pyplot-showed-that-libgl-so-1-no-such-file)*
