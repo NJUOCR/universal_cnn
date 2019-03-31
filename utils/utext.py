@@ -27,7 +27,7 @@ class TextChar:
 
     def __init__(self, char_img, offset_x=None, drawing_copy=None):
         self.img = char_img
-        self._offset_x = None
+        self._offset_x = offset_x
         self.drawing_copy = drawing_copy
         self.content_top = None
         self.content_bottom = None
