@@ -242,6 +242,10 @@ class TextChar:
         """
         return self.get_content_height(), self.get_content_width()
 
+    @property
+    def offset_x(self):
+        return self._offset_x
+
 
 class TextLine:
 
@@ -509,7 +513,7 @@ class TextLine:
                         ),
                         axis=1
                     )
-                    self.__merged_char.append(TextChar(merged_img))
+                    self.__merged_char.append(TextChar(merged_img, offset_x=self.get_char_at(merged_indices[0]).offset_x))
 
                     for m_char_idx in merged_indices:
                         self.get_chars(only_valid=False)[m_char_idx].valid(set_to=False)
