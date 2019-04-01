@@ -727,8 +727,8 @@ class TextPage:
             'lines': list(map(
                 lambda line: [{
                     'c': char.c,
-                    'x': char.inline_offset[1],
-                    'y': line.offset_y + char.inline_offset[0] if None not in (line.offset_y, *char.inline_offset) else None,
+                    'x': char.inline_offset[0],
+                    'y': line.offset_y + char.inline_offset[1] if None not in (line.offset_y, *char.inline_offset) else None,
                     'h': char.char_size[0],
                     'w': char.char_size[1]
                 } for char in line.get_chars(only_valid=True, replace_merged=True)],
