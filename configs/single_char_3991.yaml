@@ -23,7 +23,7 @@ dir_val: /usr/local/src/data/stage3/all_3991/val
 dir_infer: /usr/local/src/data/sc/hight_error
 
 # [optional] size of dataset
-train_size: 5491000
+train_size: 5582000
 val_size: 549100
 
 # Which gpu for running. Running on cpu if `-1`
