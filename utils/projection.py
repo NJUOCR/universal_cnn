@@ -138,6 +138,8 @@ def get_splitter_end(sum_array, default_end=True):
             if right > 0 and cur == 0 and left == 0:
                 splitters.append(j)
                 break
+        if len(splitters) == 1:
+            splitters.append(len(sum_array)-1)
     return splitters
 
 
