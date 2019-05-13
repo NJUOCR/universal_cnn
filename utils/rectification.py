@@ -42,7 +42,7 @@ def rectify_5(char_gen: Generator):
                 map(lambda _: _.c is not None and bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
             if letter_score > num_score:
                 char.set_content_text('O', msg='more letters around %d>%d' % (letter_score, num_score))
-        if char.c in ('I', 'l'):
+        if char.c in ('I', 'l', ']'):
             if right.c in ('、',):
                 char.set_content_text('1', msg='`、` on right')
             else:
@@ -52,10 +52,20 @@ def rectify_5(char_gen: Generator):
                     map(lambda _: _.c is not None and bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
                 if num_score > letter_score:
                     char.set_content_text('1', msg='more numbers around %d>%d' % (num_score, letter_score))
+        if char.c in ('S', 's'):
+            num_score = sum(
+                map(lambda _: _.c is not None and bool(num_ptn.match(_.c)), [lefter, left, right, righter]))
+            letter_score = sum(
+                map(lambda _: _.c is not None and bool(letter_ptn.match(_.c)), [lefter, left, right, righter]))
+            if num_score > letter_score:
+                char.set_content_text('5', msg='more numbers around %d>%d' % (num_score, letter_score))
 
-        if char.c == 'd' and right.c == '、':
-            char.set_content_text('小', msg='merge "d、" to "小"')
-            right.set_content_text('', msg='merge "d、" to "小"')
+        if char.c in ('d', '4') and right.c == '、':
+            char.set_content_text('小', msg='merge "d|4、" to "小"')
+            right.set_content_text('', msg='merge "d|4、" to "小"')
+        if char.c in ('i',) and right.c == '、':
+            char.set_content_text('门', msg='merge "i、" to "门"')
+            right.set_content_text('', msg='merge "i、" to "门"')
 
         char_5_c = set(map(lambda x: x.c, char_5))
         if len(char_5_c.intersection(('年', '月', '日', '时', '分', '秒'))) > 0:

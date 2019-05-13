@@ -7,7 +7,7 @@ from flask import Flask, request, make_response, jsonify, send_file
 from processing.single_char_processing import Processor
 
 app = Flask(__name__)
-with open('configs/infer.yaml', encoding='utf-8') as conf_file:
+with open('configs/infer_stage3.yaml', encoding='utf-8') as conf_file:
     conf_args = yaml.load(conf_file)
 CONF = {**{
     'charmap_path': "/usr/local/src/data/stage2/all/all.json",

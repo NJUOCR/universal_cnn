@@ -412,6 +412,7 @@ class TextLine:
 
     def mark_location(self):
         """
+        TODO 考虑字符整体在回归线的上方或下方，或被回归线穿过
         Newly merged chars would not be marked, because regression line is computed by
         the first-time-splited chars
         :return:
